@@ -19,6 +19,9 @@ export class DisassemblyDocument {
         vscode.workspace.openTextDocument(uri.with({ scheme: 'file' })).then(doc => {
             this._lines = new AsmParser().process(doc.getText(), new AsmFilter());
             this._emitter.fire(this._uri);
+        }, err => {
+            this._lines = [new AsmLine(`Failed to load file '${uri.path}'`, undefined)];
+            this._emitter.fire(this._uri);
         });
     }
 
