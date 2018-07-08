@@ -22,24 +22,10 @@ export function activate(context: ExtensionContext) {
         let asmUri = encodeDisassemblyUri(sourceEditor.document.uri);
 
         return workspace.openTextDocument(asmUri).then(doc => {
-            window.showTextDocument(doc, sourceEditor.viewColumn! + 1).then( disassemblyEditor => {
+            window.showTextDocument(doc, sourceEditor.viewColumn! + 1, true).then( disassemblyEditor => {
                 const disassemblyDocument = provider.provideDisassemblyDocument(asmUri);
                 const decorator = new DisassemblyDecorator(sourceEditor, disassemblyEditor, disassemblyDocument);
-
-                window.onDidChangeTextEditorSelection(e => {
-                    if (e.selections.length > 1) {
-                        return;
-                    }
-                    let selection = e.selections[0];
-                    if (!selection.isSingleLine) {
-                        return;
-                    }
-                    if (e.textEditor === sourceEditor) {
-                        decorator.highlightSourceLine(selection.start.line);
-                    } else if (e.textEditor === disassemblyEditor) {
-                        decorator.highlightDisassemblyLine(selection.start.line);
-                    }
-                });
+                window.onDidChangeTextEditorSelection( _ => decorator.update());
             });
         });
     });

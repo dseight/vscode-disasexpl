@@ -1,6 +1,6 @@
 'use strict';
 
-import { TextEditor, window, TextEditorDecorationType, DecorationOptions } from "vscode";
+import { TextEditor, window, TextEditorDecorationType, Range } from "vscode";
 import { DisassemblyDocument } from "./document";
 
 export class DisassemblyDecorator {
@@ -21,33 +21,37 @@ export class DisassemblyDecorator {
         });
     }
 
-    highlightSourceLine(line: number) {
-        const sourceLineRange = this.sourceEditor.document.lineAt(line).range;
-        const sourceLinesDecorations: DecorationOptions[] = [{range: sourceLineRange}];
-        this.sourceEditor.setDecorations(this.selectedLineDecorationType, sourceLinesDecorations);
+    update() {
+        if (window.activeTextEditor === this.sourceEditor) {
+            this.highlightSourceLine(this.sourceEditor.selection.start.line);
+        } else if (window.activeTextEditor === this.disassemblyEditor) {
+            this.highlightDisassemblyLine(this.disassemblyEditor.selection.start.line);
+        }
+    }
 
-        const asmLinesDecorations: DecorationOptions[] = [];
+    private highlightSourceLine(line: number) {
+        const sourceLineRange = this.sourceEditor.document.lineAt(line).range;
+        this.sourceEditor.setDecorations(this.selectedLineDecorationType, [sourceLineRange]);
+
+        const asmLinesRanges: Range[] = [];
         this.disassemblyDocument.lines.forEach((asmLine, index) => {
             if (asmLine.source === undefined || asmLine.source.line !== line + 1) {
                 return;
             }
-            let asmLineRange = this.disassemblyEditor.document.lineAt(index).range;
-            asmLinesDecorations.push({range: asmLineRange});
+            asmLinesRanges.push(this.disassemblyEditor.document.lineAt(index).range);
         });
-        this.disassemblyEditor.setDecorations(this.selectedLineDecorationType, asmLinesDecorations);
+        this.disassemblyEditor.setDecorations(this.selectedLineDecorationType, asmLinesRanges);
     }
 
-    highlightDisassemblyLine(line: number) {
+    private highlightDisassemblyLine(line: number) {
         let asmLine = this.disassemblyDocument.lines[line - 1];
 
         const asmLineRange = this.disassemblyEditor.document.lineAt(line).range;
-        const asmLinesDecorations: DecorationOptions[] = [{range: asmLineRange}];
-        this.disassemblyEditor.setDecorations(this.selectedLineDecorationType, asmLinesDecorations);
+        this.disassemblyEditor.setDecorations(this.selectedLineDecorationType, [asmLineRange]);
 
         if (asmLine.source !== undefined) {
             const sourceLineRange = this.sourceEditor.document.lineAt(asmLine.source.line - 1).range;
-            const sourceLinesDecorations: DecorationOptions[] = [{range: sourceLineRange}];
-            this.sourceEditor.setDecorations(this.selectedLineDecorationType, sourceLinesDecorations);
+            this.sourceEditor.setDecorations(this.selectedLineDecorationType, [sourceLineRange]);
         } else {
             this.sourceEditor.setDecorations(this.selectedLineDecorationType, []);
         }
