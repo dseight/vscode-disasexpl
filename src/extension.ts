@@ -21,7 +21,7 @@ export function activate(context: ExtensionContext) {
     const commandRegistration = commands.registerTextEditorCommand('editor.showDisassembly', sourceEditor => {
         let asmUri = encodeDisassemblyUri(sourceEditor.document.uri);
 
-        return workspace.openTextDocument(asmUri).then(doc => {
+        workspace.openTextDocument(asmUri).then(doc => {
             window.showTextDocument(doc, sourceEditor.viewColumn! + 1, true).then( disassemblyEditor => {
                 const disassemblyDocument = provider.provideDisassemblyDocument(asmUri);
                 const decorator = new DisassemblyDecorator(sourceEditor, disassemblyEditor, disassemblyDocument);
