@@ -21,19 +21,16 @@ export class DisassemblyDecorator {
         });
     }
 
+    dispose() {
+        this.selectedLineDecorationType.dispose();
+    }
+
     update() {
         if (window.activeTextEditor === this.sourceEditor) {
             this.highlightSourceLine(this.sourceEditor.selection.start.line);
         } else if (window.activeTextEditor === this.disassemblyEditor) {
             this.highlightDisassemblyLine(this.disassemblyEditor.selection.start.line);
-        } else {
-            this.clearDecorations();
         }
-    }
-
-    private clearDecorations() {
-        this.sourceEditor.setDecorations(this.selectedLineDecorationType, []);
-        this.disassemblyEditor.setDecorations(this.selectedLineDecorationType, []);
     }
 
     private highlightSourceLine(line: number) {

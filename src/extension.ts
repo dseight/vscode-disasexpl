@@ -25,7 +25,15 @@ export function activate(context: ExtensionContext) {
             window.showTextDocument(doc, sourceEditor.viewColumn! + 1, true).then( disassemblyEditor => {
                 const disassemblyDocument = provider.provideDisassemblyDocument(asmUri);
                 const decorator = new DisassemblyDecorator(sourceEditor, disassemblyEditor, disassemblyDocument);
-                window.onDidChangeTextEditorSelection( _ => decorator.update());
+                const decoratorRegistrations = Disposable.from(
+                    decorator,
+                    window.onDidChangeTextEditorSelection( _ => decorator.update())
+                );
+                window.onDidChangeVisibleTextEditors(editors => {
+                    if (editors.indexOf(sourceEditor) === -1 || editors.indexOf(disassemblyEditor) === -1) {
+                        decoratorRegistrations.dispose();
+                    }
+                });
             });
         });
     });
