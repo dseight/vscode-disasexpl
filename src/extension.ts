@@ -12,9 +12,8 @@ export function activate(context: ExtensionContext) {
     const provider = new DisassemblyProvider();
 
     // register content provider for scheme `disassembly`
-    const providerRegistrations = Disposable.from(
-        workspace.registerTextDocumentContentProvider(DisassemblyProvider.scheme, provider),
-    );
+    const providerRegistration =
+        workspace.registerTextDocumentContentProvider(DisassemblyProvider.scheme, provider);
 
     // register command that crafts an uri with the `disassembly` scheme,
     // open the dynamic document, and shows it in the next editor
@@ -41,6 +40,6 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(
         provider,
         commandRegistration,
-        providerRegistrations
+        providerRegistration
     );
 }
