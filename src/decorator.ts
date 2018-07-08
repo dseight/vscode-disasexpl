@@ -45,6 +45,15 @@ export class DisassemblyDecorator {
             asmLinesRanges.push(this.disassemblyEditor.document.lineAt(index).range);
         });
         this.disassemblyEditor.setDecorations(this.selectedLineDecorationType, asmLinesRanges);
+
+        if (asmLinesRanges.length > 0) {
+            let lineVisible = this.disassemblyEditor.visibleRanges.some(range =>
+                range.contains(asmLinesRanges[0])
+            );
+            if (!lineVisible) {
+                this.disassemblyEditor.revealRange(asmLinesRanges[0]);
+            }
+        }
     }
 
     private highlightDisassemblyLine(line: number) {
@@ -56,6 +65,7 @@ export class DisassemblyDecorator {
         if (asmLine.source !== undefined) {
             const sourceLineRange = this.sourceEditor.document.lineAt(asmLine.source.line - 1).range;
             this.sourceEditor.setDecorations(this.selectedLineDecorationType, [sourceLineRange]);
+            this.sourceEditor.revealRange(sourceLineRange);
         } else {
             this.sourceEditor.setDecorations(this.selectedLineDecorationType, []);
         }

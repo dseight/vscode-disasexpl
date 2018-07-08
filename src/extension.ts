@@ -29,6 +29,7 @@ export function activate(context: ExtensionContext) {
                     window.onDidChangeTextEditorSelection( _ => decorator.update())
                 );
                 window.onDidChangeVisibleTextEditors(editors => {
+                    // decorations become useless if one of editors is invisible
                     if (editors.indexOf(sourceEditor) === -1 || editors.indexOf(disassemblyEditor) === -1) {
                         decoratorRegistrations.dispose();
                     }
