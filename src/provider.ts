@@ -11,16 +11,21 @@ export class DisassemblyProvider implements vscode.TextDocumentContentProvider {
     private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
 
     provideTextDocumentContent(uri: vscode.Uri): string | Thenable<string> {
+        let document = this.provideDisassemblyDocument(uri);
+        return document.value;
+    }
+
+    provideDisassemblyDocument(uri: vscode.Uri): DisassemblyDocument {
         // already loaded?
         let document = this._documents.get(uri.toString());
         if (document) {
-            return document.value;
+            return document;
         }
 
         document = new DisassemblyDocument(uri, this._onDidChange);
         this._documents.set(uri.toString(), document);
 
-        return document.value;
+        return document;
     }
 
     // Expose an event to signal changes of _virtual_ documents

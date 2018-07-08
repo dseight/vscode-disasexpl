@@ -7,7 +7,7 @@ export class DisassemblyDocument {
 
     private _uri: vscode.Uri;
     private _emitter: vscode.EventEmitter<vscode.Uri>;
-    private _lines: AsmLine[] = [];
+    lines: AsmLine[] = [];
 
     constructor(uri: vscode.Uri, emitter: vscode.EventEmitter<vscode.Uri>) {
         this._uri = uri;
@@ -17,17 +17,17 @@ export class DisassemblyDocument {
         this._emitter = emitter;
 
         vscode.workspace.openTextDocument(uri.with({ scheme: 'file' })).then(doc => {
-            this._lines = new AsmParser().process(doc.getText(), new AsmFilter());
+            this.lines = new AsmParser().process(doc.getText(), new AsmFilter());
             this._emitter.fire(this._uri);
         }, err => {
-            this._lines = [new AsmLine(`Failed to load file '${uri.path}'`, undefined)];
+            this.lines = [new AsmLine(`Failed to load file '${uri.path}'`, undefined)];
             this._emitter.fire(this._uri);
         });
     }
 
     get value(): string {
         let result = '';
-        this._lines.forEach(line => {
+        this.lines.forEach(line => {
             result += line.text + '\n';
         });
         return result;
