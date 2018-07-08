@@ -6,7 +6,7 @@ Shows the filtered assembly output and it relations to original source.
 
 - [x] Highlight asm lines related to selected source line and vice versa
 - [ ] Higlight current line immidiately (no only on selection change)
-- [ ] Remove decorations when user switches to different file
+- [x] Remove decorations when user switches to different file
 - [ ] Restore decorations when user switches to original file
 - [ ] Scroll to first highlighted line if it is out of view
 - [ ] Colorize source and asm lines as in Compiler Explorer
