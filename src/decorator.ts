@@ -65,12 +65,12 @@ export class DisassemblyDecorator {
         this.sourceEditor.setDecorations(this.selectedLineDecorationType, [sourceLineRange]);
 
         const asmLinesRanges: Range[] = [];
-        this.disassemblyDocument.lines.forEach((asmLine, index) => {
-            if (asmLine.source === undefined || asmLine.source.line !== line + 1) {
-                return;
-            }
-            asmLinesRanges.push(this.disassemblyEditor.document.lineAt(index).range);
-        });
+        let mapped = this.mappings.get(line);
+        if (mapped !== undefined) {
+            mapped.forEach(line => {
+                asmLinesRanges.push(this.disassemblyEditor.document.lineAt(line).range);
+            });
+        }
         this.disassemblyEditor.setDecorations(this.selectedLineDecorationType, asmLinesRanges);
 
         if (asmLinesRanges.length > 0) {
