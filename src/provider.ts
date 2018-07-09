@@ -1,6 +1,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as Path from 'path';
 import { DisassemblyDocument } from './document';
 
 export class DisassemblyProvider implements vscode.TextDocumentContentProvider {
@@ -42,8 +43,79 @@ export class DisassemblyProvider implements vscode.TextDocumentContentProvider {
 }
 
 export function encodeDisassemblyUri(uri: vscode.Uri): vscode.Uri {
-    return uri.with({
+    const configuration = vscode.workspace.getConfiguration('', uri);
+    const associations: any = configuration.get('disasexpl.associations');
+
+    // by default just replace file extension with '.S'
+    let defaultUri = uri.with({
         scheme: DisassemblyProvider.scheme,
-        path: uri.path.replace(/\.c$/, '.gcc.S')
+        path: (uri.path.slice(0, uri.path.lastIndexOf('.')) || uri.path) + '.S'
     });
+
+    if (associations === undefined) {
+        return defaultUri;
+    }
+
+    for (let key in associations) {
+        console.log(key);
+        // that's a nasty way to get the doc...
+        let doc = vscode.workspace.textDocuments.find(doc => doc.uri === uri);
+        if (doc === undefined) {
+            continue;
+        }
+        let match = vscode.languages.match({pattern: key}, doc);
+        if (match > 0) {
+            let associated = associations[key];
+            return uri.with({
+                scheme: DisassemblyProvider.scheme,
+                path: resolvePath(uri.path, associated)
+            });
+        }
+    }
+
+    return defaultUri;
+}
+
+// Resolve path with almost all variable substitution that supported in
+// Debugging and Task configuration files
+function resolvePath(path: string, associated: string): string {
+    if (vscode.workspace.workspaceFolders === undefined) {
+        return path;
+    }
+
+    let parsedFilePath = Path.parse(path);
+    let parsedWorkspacePath = Path.parse(vscode.workspace.workspaceFolders[0].uri.path);
+
+    let variables: any = {
+        // the path of the folder opened in VS Code
+        'workspaceFolder': parsedWorkspacePath.dir,
+        // the name of the folder opened in VS Code without any slashes (/)
+        'workspaceFolderBasename': parsedWorkspacePath.name,
+        // the current opened file
+        'file': path,
+        // the current opened file relative to workspaceFolder
+        'relativeFile': Path.relative(parsedWorkspacePath.dir, path),
+        // the current opened file's basename
+        'fileBasename': parsedFilePath.base,
+        // the current opened file's basename with no file extension
+        'fileBasenameNoExtension': parsedFilePath.name,
+        // the current opened file's dirname
+        'fileDirname': parsedFilePath.dir,
+        // the current opened file's extension
+        'fileExtname': parsedFilePath.ext,
+    };
+
+    const variablesRe = /\$\{(.*?)\}/g;
+    const resolvedPath = associated.replace(variablesRe, (match: string, name: string) => {
+        const value = variables[name];
+        if (value !== undefined) {
+            return value;
+        } else {
+            // leave original (unsubstituted) value if there is no such variable
+            return match;
+        }
+    });
+
+    // normalize a path, reducing '..' and '.' parts
+    return Path.normalize(resolvedPath);
 }

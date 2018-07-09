@@ -15,6 +15,22 @@
     ],
     "main": "./out/extension",
     "contributes": {
+        "configuration": [
+            {
+                "title": "Disassembly Explorer",
+                "properties": {
+                    "disasexpl.associations": {
+                        "type": "object",
+                        "default": {
+                            "**/*.c": "${fileDirname}/${fileBasenameNoExtension}.S",
+                            "**/*.cpp": "${fileDirname}/${fileBasenameNoExtension}.S"
+                        },
+                        "description": "Where to search disassembly for matching source files",
+                        "scope": "resource"
+                    }
+                }
+            }
+        ],
         "commands": [
             {
                 "command": "editor.showDisassembly",

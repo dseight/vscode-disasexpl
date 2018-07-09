@@ -11,7 +11,7 @@ Shows the filtered assembly output and it relations to original source.
 - [x] Scroll to first highlighted line if it is out of view
 - [ ] Colorize source and asm lines as in Compiler Explorer
 - [x] Tint unused source lines
-- [ ] Add configuration of .S file path related to source file
+- [x] Add configuration for relations of source path to disassembly path
 - [ ] Add configuration option for binary asm parsing
 - [ ] If asm file was missing, try to reload on next time instead of showing
       cached document
