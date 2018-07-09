@@ -17,8 +17,9 @@ export class DisassemblyDecorator {
         this.disassemblyDocument = disassemblyDocument;
 
         this.selectedLineDecorationType = window.createTextEditorDecorationType({
+            isWholeLine: true,
             backgroundColor: new ThemeColor('editor.findMatchHighlightBackground'),
-            isWholeLine: true
+            overviewRulerColor: new ThemeColor('editorOverviewRuler.findMatchForeground')
         });
 
         this.unusedLineDecorationType = window.createTextEditorDecorationType({
