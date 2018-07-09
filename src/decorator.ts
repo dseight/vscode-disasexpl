@@ -9,6 +9,7 @@ export class DisassemblyDecorator {
     private disassemblyEditor: TextEditor;
     private disassemblyDocument: DisassemblyDocument;
     private selectedLineDecorationType: TextEditorDecorationType;
+    private unusedLineDecorationType: TextEditorDecorationType;
 
     constructor(sourceEditor: TextEditor, disassemblyEditor: TextEditor, disassemblyDocument: DisassemblyDocument) {
         this.sourceEditor = sourceEditor;
@@ -19,10 +20,17 @@ export class DisassemblyDecorator {
             backgroundColor: 'rgba(255,0,0,0.25)',
             isWholeLine: true
         });
+
+        this.unusedLineDecorationType = window.createTextEditorDecorationType({
+            opacity: '0.5'
+        });
+
+        this.dimUnusedSourceLines();
     }
 
     dispose() {
         this.selectedLineDecorationType.dispose();
+        this.unusedLineDecorationType.dispose();
     }
 
     update() {
@@ -31,6 +39,18 @@ export class DisassemblyDecorator {
         } else if (window.activeTextEditor === this.disassemblyEditor) {
             this.highlightDisassemblyLine(this.disassemblyEditor.selection.start.line);
         }
+    }
+
+    private dimUnusedSourceLines() {
+        const unusedSourceLines: Range[] = [];
+        this.disassemblyDocument.sourceToAsmMapping.then(mappings => {
+            for (let line = 0; line < this.sourceEditor.document.lineCount; line++) {
+                if (mappings.get(line) === undefined) {
+                    unusedSourceLines.push(this.sourceEditor.document.lineAt(line).range);
+                }
+            }
+            this.sourceEditor.setDecorations(this.unusedLineDecorationType, unusedSourceLines);
+        });
     }
 
     private highlightSourceLine(line: number) {

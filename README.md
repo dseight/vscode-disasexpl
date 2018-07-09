@@ -10,6 +10,6 @@ Shows the filtered assembly output and it relations to original source.
 - [ ] Restore decorations when user switches to original file
 - [x] Scroll to first highlighted line if it is out of view
 - [ ] Colorize source and asm lines as in Compiler Explorer
-- [ ] Tint unused asm lines
+- [x] Tint unused source lines
 - [ ] Add configuration of .S file path related to source file
 - [ ] Add configuration option for binary asm parsing
