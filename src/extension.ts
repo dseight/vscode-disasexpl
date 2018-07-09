@@ -34,6 +34,8 @@ export function activate(context: ExtensionContext) {
                         decoratorRegistrations.dispose();
                     }
                 });
+                // dirty way to get decorations work right after showing disassembly
+                setTimeout(_ => decorator.update(), 300);
             });
         });
     });
