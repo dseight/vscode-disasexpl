@@ -13,3 +13,8 @@ Shows the filtered assembly output and it relations to original source.
 - [x] Tint unused source lines
 - [ ] Add configuration of .S file path related to source file
 - [ ] Add configuration option for binary asm parsing
+- [ ] If asm file was missing, try to reload on next time instead of showing
+      cached document
+- [ ] Be aware of file changes (asm should be reloaded)
+- [ ] Do not suppose that asm has only one source file - this may lead to
+      false-positive line matches
