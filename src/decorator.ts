@@ -1,6 +1,6 @@
 'use strict';
 
-import { TextEditor, window, TextEditorDecorationType, Range } from "vscode";
+import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor } from "vscode";
 import { DisassemblyDocument } from "./document";
 
 export class DisassemblyDecorator {
@@ -17,7 +17,7 @@ export class DisassemblyDecorator {
         this.disassemblyDocument = disassemblyDocument;
 
         this.selectedLineDecorationType = window.createTextEditorDecorationType({
-            backgroundColor: 'rgba(255,0,0,0.25)',
+            backgroundColor: new ThemeColor('editor.findMatchHighlightBackground'),
             isWholeLine: true
         });
 
