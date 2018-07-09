@@ -11,6 +11,9 @@ export class DisassemblyDecorator {
     private selectedLineDecorationType: TextEditorDecorationType;
     private unusedLineDecorationType: TextEditorDecorationType;
 
+    // mappings from source lines to assembly lines
+    private mappings = new Map<number, number[]>();
+
     constructor(sourceEditor: TextEditor, disassemblyEditor: TextEditor, disassemblyDocument: DisassemblyDocument) {
         this.sourceEditor = sourceEditor;
         this.disassemblyEditor = disassemblyEditor;
@@ -27,6 +30,11 @@ export class DisassemblyDecorator {
         });
 
         this.dimUnusedSourceLines();
+
+        this.disassemblyDocument.sourceToAsmMapping.then(mappings => {
+            this.mappings = mappings;
+            this.dimUnusedSourceLines();
+        });
     }
 
     dispose() {
@@ -44,14 +52,12 @@ export class DisassemblyDecorator {
 
     private dimUnusedSourceLines() {
         const unusedSourceLines: Range[] = [];
-        this.disassemblyDocument.sourceToAsmMapping.then(mappings => {
-            for (let line = 0; line < this.sourceEditor.document.lineCount; line++) {
-                if (mappings.get(line) === undefined) {
-                    unusedSourceLines.push(this.sourceEditor.document.lineAt(line).range);
-                }
+        for (let line = 0; line < this.sourceEditor.document.lineCount; line++) {
+            if (this.mappings.get(line) === undefined) {
+                unusedSourceLines.push(this.sourceEditor.document.lineAt(line).range);
             }
-            this.sourceEditor.setDecorations(this.unusedLineDecorationType, unusedSourceLines);
-        });
+        }
+        this.sourceEditor.setDecorations(this.unusedLineDecorationType, unusedSourceLines);
     }
 
     private highlightSourceLine(line: number) {
