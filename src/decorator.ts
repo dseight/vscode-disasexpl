@@ -1,6 +1,6 @@
 'use strict';
 
-import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor } from "vscode";
+import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor, workspace } from "vscode";
 import { DisassemblyDocument } from "./document";
 
 export class DisassemblyDecorator {
@@ -31,7 +31,13 @@ export class DisassemblyDecorator {
 
         this.disassemblyDocument.sourceToAsmMapping.then(mappings => {
             this.mappings = mappings;
-            this.dimUnusedSourceLines();
+
+            const dimUnused = workspace.getConfiguration('', sourceEditor.document.uri)
+                .get('disasexpl.dimUnusedSourceLines', true);
+
+            if (dimUnused) {
+                this.dimUnusedSourceLines();
+            }
         });
     }
 

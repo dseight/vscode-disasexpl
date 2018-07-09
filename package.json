@@ -27,6 +27,12 @@
                         },
                         "description": "Where to search disassembly for matching source files",
                         "scope": "resource"
+                    },
+                    "disasexpl.dimUnusedSourceLines": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Dim the lines that was thrown away by compiler",
+                        "scope": "resource"
                     }
                 }
             }
