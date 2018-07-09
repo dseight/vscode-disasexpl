@@ -29,8 +29,6 @@ export class DisassemblyDecorator {
             opacity: '0.5'
         });
 
-        this.dimUnusedSourceLines();
-
         this.disassemblyDocument.sourceToAsmMapping.then(mappings => {
             this.mappings = mappings;
             this.dimUnusedSourceLines();
