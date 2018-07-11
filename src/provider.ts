@@ -57,7 +57,6 @@ export function encodeDisassemblyUri(uri: vscode.Uri): vscode.Uri {
     }
 
     for (let key in associations) {
-        console.log(key);
         // that's a nasty way to get the doc...
         let doc = vscode.workspace.textDocuments.find(doc => doc.uri === uri);
         if (doc === undefined) {
