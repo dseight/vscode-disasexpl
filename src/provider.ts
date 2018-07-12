@@ -36,6 +36,7 @@ export class DisassemblyProvider implements vscode.TextDocumentContentProvider {
     }
 
     dispose() {
+        this._documents.forEach(doc => doc.dispose());
         this._documents.clear();
         this._onDidChange.dispose();
     }
