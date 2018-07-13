@@ -25,14 +25,14 @@ export function activate(context: ExtensionContext) {
                 const decorator = new DisassemblyDecorator(sourceEditor, disassemblyEditor, provider);
                 const decoratorRegistrations = Disposable.from(
                     decorator,
-                    window.onDidChangeTextEditorSelection( _ => decorator.update())
+                    window.onDidChangeTextEditorSelection( _ => decorator.update()),
+                    window.onDidChangeVisibleTextEditors(editors => {
+                        // decorations are useless if one of editors become invisible
+                        if (editors.indexOf(sourceEditor) === -1 || editors.indexOf(disassemblyEditor) === -1) {
+                            decoratorRegistrations.dispose();
+                        }
+                    })
                 );
-                window.onDidChangeVisibleTextEditors(editors => {
-                    // decorations are useless if one of editors become invisible
-                    if (editors.indexOf(sourceEditor) === -1 || editors.indexOf(disassemblyEditor) === -1) {
-                        decoratorRegistrations.dispose();
-                    }
-                });
                 // dirty way to get decorations work right after showing disassembly
                 setTimeout(_ => decorator.update(), 300);
             });
