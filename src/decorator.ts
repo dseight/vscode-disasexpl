@@ -2,6 +2,7 @@
 
 import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor, workspace, Uri, Disposable } from "vscode";
 import { DisassemblyProvider } from "./provider";
+import { DisassemblyDocument } from "./document";
 
 export class DisassemblyDecorator {
 
@@ -11,6 +12,7 @@ export class DisassemblyDecorator {
     private selectedLineDecorationType: TextEditorDecorationType;
     private unusedLineDecorationType: TextEditorDecorationType;
     private disposable: Disposable;
+    private document: DisassemblyDocument;
 
     // mappings from source lines to assembly lines
     private mappings = new Map<number, number[]>();
@@ -31,7 +33,11 @@ export class DisassemblyDecorator {
         });
 
         const uri = disassemblyEditor.document.uri;
-        const providerEventRegistration = provider.onDidChange(_ => this.load(uri));
+        const providerEventRegistration = provider.onDidChange(changedUri => {
+            if (changedUri.toString() === uri.toString()) {
+                this.load(uri);
+            }
+        });
 
         this.disposable = Disposable.from(
             this.selectedLineDecorationType,
@@ -45,18 +51,15 @@ export class DisassemblyDecorator {
     }
 
     load(uri: Uri) {
-        const document = this.provider.provideDisassemblyDocument(uri);
+        this.document = this.provider.provideDisassemblyDocument(uri);
+        this.mappings = this.document.sourceToAsmMapping;
 
-        document.sourceToAsmMapping.then(mappings => {
-            this.mappings = mappings;
+        const dimUnused = workspace.getConfiguration('', this.sourceEditor.document.uri)
+            .get('disasexpl.dimUnusedSourceLines', true);
 
-            const dimUnused = workspace.getConfiguration('', this.sourceEditor.document.uri)
-                .get('disasexpl.dimUnusedSourceLines', true);
-
-            if (dimUnused) {
-                this.dimUnusedSourceLines();
-            }
-        });
+        if (dimUnused) {
+            this.dimUnusedSourceLines();
+        }
     }
 
     update() {
@@ -101,10 +104,7 @@ export class DisassemblyDecorator {
     }
 
     private highlightDisassemblyLine(line: number) {
-        const uri = this.disassemblyEditor.document.uri;
-        const document = this.provider.provideDisassemblyDocument(uri);
-
-        let asmLine = document.lines[line - 1];
+        let asmLine = this.document.lines[line - 1];
 
         const asmLineRange = this.disassemblyEditor.document.lineAt(line).range;
         this.disassemblyEditor.setDecorations(this.selectedLineDecorationType, [asmLineRange]);

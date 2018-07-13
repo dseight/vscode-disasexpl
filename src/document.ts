@@ -8,7 +8,7 @@ export class DisassemblyDocument {
     private _uri: vscode.Uri;
     private _emitter: vscode.EventEmitter<vscode.Uri>;
     lines: AsmLine[] = [];
-    sourceToAsmMapping: Thenable<Map<number, number[]>>;
+    sourceToAsmMapping = new Map<number, number[]>();
 
     constructor(uri: vscode.Uri, emitter: vscode.EventEmitter<vscode.Uri>) {
         this._uri = uri;
@@ -17,14 +17,14 @@ export class DisassemblyDocument {
         // the containg provider. This allows it to signal changes
         this._emitter = emitter;
 
-        this.sourceToAsmMapping = vscode.workspace.openTextDocument(this._uri.with({ scheme: 'file' })).then(doc => {
+        vscode.workspace.openTextDocument(this._uri.with({ scheme: 'file' })).then(doc => {
             this.lines = new AsmParser().process(doc.getText(), new AsmFilter());
-            this._emitter.fire(this._uri);
         }, err => {
             this.lines = [new AsmLine(`Failed to load file '${this._uri.path}'`, undefined)];
-            this._emitter.fire(this._uri);
         }).then( _ => {
-            let mapping = new Map<number, number[]>();
+            let mapping = this.sourceToAsmMapping;
+            mapping.clear();
+
             this.lines.forEach((line, index) => {
                 if (line.source === undefined) {
                     return;
@@ -35,7 +35,8 @@ export class DisassemblyDocument {
                 }
                 mapping.get(sourceLine)!.push(index);
             });
-            return mapping;
+
+            this._emitter.fire(this._uri);
         });
     }
 
