@@ -1,23 +1,23 @@
 'use strict';
 
-import * as vscode from 'vscode';
+import { workspace, languages, Uri, FileSystemWatcher, EventEmitter, TextDocumentContentProvider } from 'vscode';
 import * as Path from 'path';
 import { DisassemblyDocument } from './document';
 
-export class DisassemblyProvider implements vscode.TextDocumentContentProvider {
+export class DisassemblyProvider implements TextDocumentContentProvider {
 
     static scheme = 'disassembly';
 
     private _documents = new Map<string, DisassemblyDocument>();
-    private _watchers = new Map<string, vscode.FileSystemWatcher>();
-    private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
+    private _watchers = new Map<string, FileSystemWatcher>();
+    private _onDidChange = new EventEmitter<Uri>();
 
-    provideTextDocumentContent(uri: vscode.Uri): string | Thenable<string> {
+    provideTextDocumentContent(uri: Uri): string | Thenable<string> {
         let document = this.provideDisassemblyDocument(uri);
         return document.value;
     }
 
-    provideDisassemblyDocument(uri: vscode.Uri): DisassemblyDocument {
+    provideDisassemblyDocument(uri: Uri): DisassemblyDocument {
         // already loaded?
         let document = this._documents.get(uri.toString());
         if (document) {
@@ -28,7 +28,7 @@ export class DisassemblyProvider implements vscode.TextDocumentContentProvider {
         this._documents.set(uri.toString(), document);
 
         // Watch for document-related file changes
-        let watcher = vscode.workspace.createFileSystemWatcher(uri.path);
+        let watcher = workspace.createFileSystemWatcher(uri.path);
         watcher.onDidChange(fileUri => this.reloadDocument(fileUri));
         watcher.onDidCreate(fileUri => this.reloadDocument(fileUri));
         watcher.onDidDelete(fileUri => this.reloadDocument(fileUri));
@@ -37,7 +37,7 @@ export class DisassemblyProvider implements vscode.TextDocumentContentProvider {
         return document;
     }
 
-    reloadDocument(fileUri: vscode.Uri) {
+    reloadDocument(fileUri: Uri) {
         const uri = fileUri.with({scheme: DisassemblyProvider.scheme});
         const document = new DisassemblyDocument(uri, this._onDidChange);
         this._documents.set(uri.toString(), document);
@@ -58,8 +58,8 @@ export class DisassemblyProvider implements vscode.TextDocumentContentProvider {
 
 }
 
-export function encodeDisassemblyUri(uri: vscode.Uri): vscode.Uri {
-    const configuration = vscode.workspace.getConfiguration('', uri);
+export function encodeDisassemblyUri(uri: Uri): Uri {
+    const configuration = workspace.getConfiguration('', uri);
     const associations: any = configuration.get('disasexpl.associations');
 
     // by default just replace file extension with '.S'
@@ -74,11 +74,11 @@ export function encodeDisassemblyUri(uri: vscode.Uri): vscode.Uri {
 
     for (let key in associations) {
         // that's a nasty way to get the doc...
-        let doc = vscode.workspace.textDocuments.find(doc => doc.uri === uri);
+        let doc = workspace.textDocuments.find(doc => doc.uri === uri);
         if (doc === undefined) {
             continue;
         }
-        let match = vscode.languages.match({pattern: key}, doc);
+        let match = languages.match({pattern: key}, doc);
         if (match > 0) {
             let associated = associations[key];
             return uri.with({
@@ -94,12 +94,12 @@ export function encodeDisassemblyUri(uri: vscode.Uri): vscode.Uri {
 // Resolve path with almost all variable substitution that supported in
 // Debugging and Task configuration files
 function resolvePath(path: string, associated: string): string {
-    if (vscode.workspace.workspaceFolders === undefined) {
+    if (workspace.workspaceFolders === undefined) {
         return path;
     }
 
     let parsedFilePath = Path.parse(path);
-    let parsedWorkspacePath = Path.parse(vscode.workspace.workspaceFolders[0].uri.path);
+    let parsedWorkspacePath = Path.parse(workspace.workspaceFolders[0].uri.path);
 
     let variables: any = {
         // the path of the folder opened in VS Code

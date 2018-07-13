@@ -23,13 +23,13 @@ export function activate(context: ExtensionContext) {
         workspace.openTextDocument(asmUri).then(doc => {
             window.showTextDocument(doc, sourceEditor.viewColumn! + 1, true).then( disassemblyEditor => {
                 const decorator = new DisassemblyDecorator(sourceEditor, disassemblyEditor, provider);
-                const decoratorRegistrations = Disposable.from(
+                const registrations = Disposable.from(
                     decorator,
                     window.onDidChangeTextEditorSelection( _ => decorator.update()),
                     window.onDidChangeVisibleTextEditors(editors => {
                         // decorations are useless if one of editors become invisible
                         if (editors.indexOf(sourceEditor) === -1 || editors.indexOf(disassemblyEditor) === -1) {
-                            decoratorRegistrations.dispose();
+                            registrations.dispose();
                         }
                     })
                 );
