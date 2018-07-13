@@ -38,6 +38,7 @@ export class DisassemblyDecorator {
                 this.load(uri);
             }
         });
+        this.load(uri);
 
         this.disposable = Disposable.from(
             this.selectedLineDecorationType,
