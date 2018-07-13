@@ -33,8 +33,8 @@ export function activate(context: ExtensionContext) {
                         }
                     })
                 );
-                // dirty way to get decorations work right after showing disassembly
-                setTimeout(_ => decorator.update(), 300);
+                // dirty way to get decorations work after showing disassembly
+                setTimeout(_ => decorator.update(), 500);
             });
         });
     });
