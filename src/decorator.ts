@@ -1,6 +1,6 @@
 'use strict';
 
-import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor, workspace, Uri, Disposable } from "vscode";
+import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor, workspace, Uri, Disposable, TextEditorRevealType } from "vscode";
 import { DisassemblyProvider } from "./provider";
 import { DisassemblyDocument } from "./document";
 
@@ -95,12 +95,7 @@ export class DisassemblyDecorator {
         this.disassemblyEditor.setDecorations(this.selectedLineDecorationType, asmLinesRanges);
 
         if (asmLinesRanges.length > 0) {
-            let lineVisible = this.disassemblyEditor.visibleRanges.some(range =>
-                range.contains(asmLinesRanges[0])
-            );
-            if (!lineVisible) {
-                this.disassemblyEditor.revealRange(asmLinesRanges[0]);
-            }
+            this.disassemblyEditor.revealRange(asmLinesRanges[0], TextEditorRevealType.InCenterIfOutsideViewport);
         }
     }
 
@@ -113,7 +108,7 @@ export class DisassemblyDecorator {
         if (asmLine.source !== undefined) {
             const sourceLineRange = this.sourceEditor.document.lineAt(asmLine.source.line - 1).range;
             this.sourceEditor.setDecorations(this.selectedLineDecorationType, [sourceLineRange]);
-            this.sourceEditor.revealRange(sourceLineRange);
+            this.sourceEditor.revealRange(sourceLineRange, TextEditorRevealType.InCenterIfOutsideViewport);
         } else {
             this.sourceEditor.setDecorations(this.selectedLineDecorationType, []);
         }
