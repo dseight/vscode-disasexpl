@@ -22,8 +22,7 @@ export function activate(context: ExtensionContext) {
 
         workspace.openTextDocument(asmUri).then(doc => {
             window.showTextDocument(doc, sourceEditor.viewColumn! + 1, true).then( disassemblyEditor => {
-                const disassemblyDocument = provider.provideDisassemblyDocument(asmUri);
-                const decorator = new DisassemblyDecorator(sourceEditor, disassemblyEditor, disassemblyDocument);
+                const decorator = new DisassemblyDecorator(sourceEditor, disassemblyEditor, provider);
                 const decoratorRegistrations = Disposable.from(
                     decorator,
                     window.onDidChangeTextEditorSelection( _ => decorator.update())

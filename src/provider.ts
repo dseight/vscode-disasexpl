@@ -9,6 +9,7 @@ export class DisassemblyProvider implements vscode.TextDocumentContentProvider {
     static scheme = 'disassembly';
 
     private _documents = new Map<string, DisassemblyDocument>();
+    private _watchers = new Map<string, vscode.FileSystemWatcher>();
     private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
 
     provideTextDocumentContent(uri: vscode.Uri): string | Thenable<string> {
@@ -26,7 +27,21 @@ export class DisassemblyProvider implements vscode.TextDocumentContentProvider {
         document = new DisassemblyDocument(uri, this._onDidChange);
         this._documents.set(uri.toString(), document);
 
+        // Watch for document-related file changes
+        let watcher = vscode.workspace.createFileSystemWatcher(uri.path);
+        watcher.onDidChange(fileUri => this.reloadDocument(fileUri));
+        watcher.onDidCreate(fileUri => this.reloadDocument(fileUri));
+        watcher.onDidDelete(fileUri => this.reloadDocument(fileUri));
+        this._watchers.set(uri.toString(), watcher);
+
         return document;
+    }
+
+    reloadDocument(fileUri: vscode.Uri) {
+        const uri = fileUri.with({scheme: DisassemblyProvider.scheme});
+        const document = new DisassemblyDocument(uri, this._onDidChange);
+        this._documents.set(uri.toString(), document);
+        this._onDidChange.fire(uri);
     }
 
     // Expose an event to signal changes of _virtual_ documents
@@ -36,7 +51,7 @@ export class DisassemblyProvider implements vscode.TextDocumentContentProvider {
     }
 
     dispose() {
-        this._documents.forEach(doc => doc.dispose());
+        this._watchers.forEach(watcher => watcher.dispose());
         this._documents.clear();
         this._onDidChange.dispose();
     }

@@ -7,7 +7,6 @@ export class DisassemblyDocument {
 
     private _uri: vscode.Uri;
     private _emitter: vscode.EventEmitter<vscode.Uri>;
-    private _watcher: vscode.FileSystemWatcher;
     lines: AsmLine[] = [];
     sourceToAsmMapping: Thenable<Map<number, number[]>>;
 
@@ -18,19 +17,6 @@ export class DisassemblyDocument {
         // the containg provider. This allows it to signal changes
         this._emitter = emitter;
 
-        this.load();
-
-        this._watcher = vscode.workspace.createFileSystemWatcher(uri.path);
-        this._watcher.onDidChange(_ => this.load());
-        this._watcher.onDidCreate(_ => this.load());
-        this._watcher.onDidDelete(_ => this.load());
-    }
-
-    dispose() {
-        this._watcher.dispose();
-    }
-
-    private load() {
         this.sourceToAsmMapping = vscode.workspace.openTextDocument(this._uri.with({ scheme: 'file' })).then(doc => {
             this.lines = new AsmParser().process(doc.getText(), new AsmFilter());
             this._emitter.fire(this._uri);

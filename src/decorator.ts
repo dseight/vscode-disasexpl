@@ -1,23 +1,24 @@
 'use strict';
 
-import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor, workspace } from "vscode";
-import { DisassemblyDocument } from "./document";
+import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor, workspace, Uri, Disposable } from "vscode";
+import { DisassemblyProvider } from "./provider";
 
 export class DisassemblyDecorator {
 
     private sourceEditor: TextEditor;
     private disassemblyEditor: TextEditor;
-    private disassemblyDocument: DisassemblyDocument;
+    private provider: DisassemblyProvider;
     private selectedLineDecorationType: TextEditorDecorationType;
     private unusedLineDecorationType: TextEditorDecorationType;
+    private disposable: Disposable;
 
     // mappings from source lines to assembly lines
     private mappings = new Map<number, number[]>();
 
-    constructor(sourceEditor: TextEditor, disassemblyEditor: TextEditor, disassemblyDocument: DisassemblyDocument) {
+    constructor(sourceEditor: TextEditor, disassemblyEditor: TextEditor, provider: DisassemblyProvider) {
         this.sourceEditor = sourceEditor;
         this.disassemblyEditor = disassemblyEditor;
-        this.disassemblyDocument = disassemblyDocument;
+        this.provider = provider;
 
         this.selectedLineDecorationType = window.createTextEditorDecorationType({
             isWholeLine: true,
@@ -29,21 +30,33 @@ export class DisassemblyDecorator {
             opacity: '0.5'
         });
 
-        this.disassemblyDocument.sourceToAsmMapping.then(mappings => {
+        const uri = disassemblyEditor.document.uri;
+        const providerEventRegistration = provider.onDidChange(_ => this.load(uri));
+
+        this.disposable = Disposable.from(
+            this.selectedLineDecorationType,
+            this.unusedLineDecorationType,
+            providerEventRegistration,
+        );
+    }
+
+    dispose() {
+        this.disposable.dispose();
+    }
+
+    load(uri: Uri) {
+        const document = this.provider.provideDisassemblyDocument(uri);
+
+        document.sourceToAsmMapping.then(mappings => {
             this.mappings = mappings;
 
-            const dimUnused = workspace.getConfiguration('', sourceEditor.document.uri)
+            const dimUnused = workspace.getConfiguration('', this.sourceEditor.document.uri)
                 .get('disasexpl.dimUnusedSourceLines', true);
 
             if (dimUnused) {
                 this.dimUnusedSourceLines();
             }
         });
-    }
-
-    dispose() {
-        this.selectedLineDecorationType.dispose();
-        this.unusedLineDecorationType.dispose();
     }
 
     update() {
@@ -88,7 +101,10 @@ export class DisassemblyDecorator {
     }
 
     private highlightDisassemblyLine(line: number) {
-        let asmLine = this.disassemblyDocument.lines[line - 1];
+        const uri = this.disassemblyEditor.document.uri;
+        const document = this.provider.provideDisassemblyDocument(uri);
+
+        let asmLine = document.lines[line - 1];
 
         const asmLineRange = this.disassemblyEditor.document.lineAt(line).range;
         this.disassemblyEditor.setDecorations(this.selectedLineDecorationType, [asmLineRange]);
