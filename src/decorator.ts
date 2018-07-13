@@ -89,6 +89,9 @@ export class DisassemblyDecorator {
         let mapped = this.mappings.get(line);
         if (mapped !== undefined) {
             mapped.forEach(line => {
+                if (line >= this.disassemblyEditor.document.lineCount) {
+                    return;
+                }
                 asmLinesRanges.push(this.disassemblyEditor.document.lineAt(line).range);
             });
         }
