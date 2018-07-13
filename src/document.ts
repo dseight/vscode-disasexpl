@@ -3,7 +3,7 @@
 import { workspace, Uri, EventEmitter } from 'vscode';
 import { AsmParser, AsmLine, AsmFilter } from './asm';
 
-export class DisassemblyDocument {
+export class AsmDocument {
 
     private _uri: Uri;
     private _emitter: EventEmitter<Uri>;
@@ -13,7 +13,7 @@ export class DisassemblyDocument {
     constructor(uri: Uri, emitter: EventEmitter<Uri>) {
         this._uri = uri;
 
-        // The DisassemblyDocument has access to the event emitter from
+        // The AsmDocument has access to the event emitter from
         // the containg provider. This allows it to signal changes
         this._emitter = emitter;
 

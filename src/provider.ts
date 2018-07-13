@@ -2,44 +2,44 @@
 
 import { workspace, languages, Uri, FileSystemWatcher, EventEmitter, TextDocumentContentProvider } from 'vscode';
 import * as Path from 'path';
-import { DisassemblyDocument } from './document';
+import { AsmDocument } from './document';
 
-export class DisassemblyProvider implements TextDocumentContentProvider {
+export class AsmProvider implements TextDocumentContentProvider {
 
     static scheme = 'disassembly';
 
-    private _documents = new Map<string, DisassemblyDocument>();
+    private _documents = new Map<string, AsmDocument>();
     private _watchers = new Map<string, FileSystemWatcher>();
     private _onDidChange = new EventEmitter<Uri>();
 
     provideTextDocumentContent(uri: Uri): string | Thenable<string> {
-        let document = this.provideDisassemblyDocument(uri);
+        let document = this.provideAsmDocument(uri);
         return document.value;
     }
 
-    provideDisassemblyDocument(uri: Uri): DisassemblyDocument {
+    provideAsmDocument(uri: Uri): AsmDocument {
         // already loaded?
         let document = this._documents.get(uri.toString());
         if (document) {
             return document;
         }
 
-        document = new DisassemblyDocument(uri, this._onDidChange);
+        document = new AsmDocument(uri, this._onDidChange);
         this._documents.set(uri.toString(), document);
 
         // Watch for document-related file changes
         let watcher = workspace.createFileSystemWatcher(uri.path);
-        watcher.onDidChange(fileUri => this.reloadDocument(fileUri));
-        watcher.onDidCreate(fileUri => this.reloadDocument(fileUri));
-        watcher.onDidDelete(fileUri => this.reloadDocument(fileUri));
+        watcher.onDidChange(fileUri => this.reloadAsmDocument(fileUri));
+        watcher.onDidCreate(fileUri => this.reloadAsmDocument(fileUri));
+        watcher.onDidDelete(fileUri => this.reloadAsmDocument(fileUri));
         this._watchers.set(uri.toString(), watcher);
 
         return document;
     }
 
-    reloadDocument(fileUri: Uri) {
-        const uri = fileUri.with({scheme: DisassemblyProvider.scheme});
-        const document = new DisassemblyDocument(uri, this._onDidChange);
+    reloadAsmDocument(fileUri: Uri) {
+        const uri = fileUri.with({scheme: AsmProvider.scheme});
+        const document = new AsmDocument(uri, this._onDidChange);
         this._documents.set(uri.toString(), document);
         this._onDidChange.fire(uri);
     }
@@ -58,13 +58,13 @@ export class DisassemblyProvider implements TextDocumentContentProvider {
 
 }
 
-export function encodeDisassemblyUri(uri: Uri): Uri {
+export function encodeAsmUri(uri: Uri): Uri {
     const configuration = workspace.getConfiguration('', uri);
     const associations: any = configuration.get('disasexpl.associations');
 
     // by default just replace file extension with '.S'
     let defaultUri = uri.with({
-        scheme: DisassemblyProvider.scheme,
+        scheme: AsmProvider.scheme,
         path: (uri.path.slice(0, uri.path.lastIndexOf('.')) || uri.path) + '.S'
     });
 
@@ -82,7 +82,7 @@ export function encodeDisassemblyUri(uri: Uri): Uri {
         if (match > 0) {
             let associated = associations[key];
             return uri.with({
-                scheme: DisassemblyProvider.scheme,
+                scheme: AsmProvider.scheme,
                 path: resolvePath(uri.path, associated)
             });
         }
