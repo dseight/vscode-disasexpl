@@ -104,7 +104,7 @@ export class DisassemblyDecorator {
     }
 
     private highlightDisassemblyLine(line: number) {
-        let asmLine = this.document.lines[line - 1];
+        let asmLine = this.document.lines[line];
 
         const asmLineRange = this.disassemblyEditor.document.lineAt(line).range;
         this.disassemblyEditor.setDecorations(this.selectedLineDecorationType, [asmLineRange]);
