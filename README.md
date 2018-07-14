@@ -12,7 +12,7 @@ Shows the filtered assembly output and it relations to original source.
 - [ ] Colorize source and asm lines as in Compiler Explorer
 - [x] Tint unused source lines
 - [x] Add configuration for relations of source path to disassembly path
-- [ ] Add configuration option for binary asm parsing
+- [x] Add configuration option for binary asm parsing
 - [x] If asm file was missing, try to reload on next time instead of showing
       cached document
 - [x] Be aware of file changes (asm should be reloaded)

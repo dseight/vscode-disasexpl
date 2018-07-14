@@ -1,7 +1,7 @@
 'use strict';
 
 import { workspace, Uri, EventEmitter } from 'vscode';
-import { AsmParser, AsmLine, AsmFilter } from './asm';
+import { AsmParser, AsmLine, AsmFilter, BinaryAsmLine } from './asm';
 
 export class AsmDocument {
 
@@ -17,8 +17,13 @@ export class AsmDocument {
         // the containg provider. This allows it to signal changes
         this._emitter = emitter;
 
+        const useBinaryParsing = workspace.getConfiguration('', uri.with({scheme: 'file'}))
+            .get('disasexpl.useBinaryParsing', false);
+
         workspace.openTextDocument(this._uri.with({ scheme: 'file' })).then(doc => {
-            this.lines = new AsmParser().process(doc.getText(), new AsmFilter());
+            const filter = new AsmFilter();
+            filter.binary = useBinaryParsing;
+            this.lines = new AsmParser().process(doc.getText(), filter);
         }, err => {
             this.lines = [new AsmLine(`Failed to load file '${this._uri.path}'`, undefined)];
         }).then(_ => {
@@ -43,7 +48,12 @@ export class AsmDocument {
     get value(): string {
         let result = '';
         this.lines.forEach(line => {
-            result += line.text + '\n';
+            if (line instanceof BinaryAsmLine) {
+                let address = ("0000000" + line.address.toString(16)).substr(-8);
+                result += `<${address}> ${line.text}\n`;
+            } else {
+                result += line.text + '\n';
+            }
         });
         return result;
     }

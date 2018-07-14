@@ -392,7 +392,7 @@ export class AsmParser {
         asmLines.forEach(line => {
             let match = line.match(this.lineRe);
             if (match) {
-                source = new AsmSource(undefined, parseInt(match[2]));
+                source = new AsmSource(match[1], parseInt(match[2]));
                 return;
             }
 
