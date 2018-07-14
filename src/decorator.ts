@@ -3,6 +3,7 @@
 import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor, workspace, Uri, Disposable, TextEditorRevealType } from "vscode";
 import { AsmProvider } from "./provider";
 import { AsmDocument } from "./document";
+import { AsmLine } from "./asm";
 
 export class AsmDecorator {
 
@@ -63,7 +64,7 @@ export class AsmDecorator {
 
     load(uri: Uri) {
         this.document = this.provider.provideAsmDocument(uri);
-        this.mappings = this.document.sourceToAsmMapping;
+        this.loadMappings();
 
         const dimUnused = workspace.getConfiguration('', this.srcEditor.document.uri)
             .get('disasexpl.dimUnusedSourceLines', true);
@@ -71,6 +72,37 @@ export class AsmDecorator {
         if (dimUnused) {
             this.dimUnusedSourceLines();
         }
+    }
+
+    asmLineHasSource(asmLine: AsmLine): boolean {
+        const sourceName = this.srcEditor.document.uri.path;
+
+        if (asmLine.source === undefined) {
+            return false;
+        }
+
+        // assembly may contain lines from different source files,
+        // thus we should check that line comes from current opened file
+        if (asmLine.source.file === undefined || !sourceName.endsWith(asmLine.source.file)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    loadMappings() {
+        this.mappings.clear();
+
+        this.document.lines.forEach((line, index) => {
+            if (!this.asmLineHasSource(line)) {
+                return;
+            }
+            let sourceLine = line.source!.line - 1;
+            if (this.mappings.get(sourceLine) === undefined) {
+                this.mappings.set(sourceLine, []);
+            }
+            this.mappings.get(sourceLine)!.push(index);
+        });
     }
 
     updateSelection(editor: TextEditor) {
@@ -118,8 +150,8 @@ export class AsmDecorator {
         const asmLineRange = this.asmEditor.document.lineAt(line).range;
         this.asmEditor.setDecorations(this.selectedLineDecorationType, [asmLineRange]);
 
-        if (asmLine.source !== undefined) {
-            const srcLineRange = this.srcEditor.document.lineAt(asmLine.source.line - 1).range;
+        if (this.asmLineHasSource(asmLine)) {
+            const srcLineRange = this.srcEditor.document.lineAt(asmLine.source!.line - 1).range;
             this.srcEditor.setDecorations(this.selectedLineDecorationType, [srcLineRange]);
             this.srcEditor.revealRange(srcLineRange, TextEditorRevealType.InCenterIfOutsideViewport);
         } else {

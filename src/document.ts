@@ -26,23 +26,7 @@ export class AsmDocument {
             this.lines = new AsmParser().process(doc.getText(), filter);
         }, err => {
             this.lines = [new AsmLine(`Failed to load file '${this._uri.path}'`, undefined)];
-        }).then(_ => {
-            let mapping = this.sourceToAsmMapping;
-            mapping.clear();
-
-            this.lines.forEach((line, index) => {
-                if (line.source === undefined) {
-                    return;
-                }
-                let sourceLine = line.source.line - 1;
-                if (mapping.get(sourceLine) === undefined) {
-                    mapping.set(sourceLine, []);
-                }
-                mapping.get(sourceLine)!.push(index);
-            });
-
-            this._emitter.fire(this._uri);
-        });
+        }).then(_ => this._emitter.fire(this._uri));
     }
 
     get value(): string {
