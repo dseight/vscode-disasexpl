@@ -21,10 +21,10 @@ export function activate(context: ExtensionContext) {
         let asmUri = encodeAsmUri(srcEditor.document.uri);
 
         workspace.openTextDocument(asmUri).then(doc => {
-            window.showTextDocument(doc, srcEditor.viewColumn! + 1, true).then( asmEditor => {
+            window.showTextDocument(doc, srcEditor.viewColumn! + 1, true).then(asmEditor => {
                 const decorator = new AsmDecorator(srcEditor, asmEditor, provider);
                 // dirty way to get decorations work after showing disassembly
-                setTimeout(_ => decorator.update(), 500);
+                setTimeout(_ => decorator.updateSelection(srcEditor), 500);
             });
         });
     });

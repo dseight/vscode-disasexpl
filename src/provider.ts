@@ -27,7 +27,7 @@ export class AsmProvider implements TextDocumentContentProvider {
         document = new AsmDocument(uri, this._onDidChange);
         this._documents.set(uri.toString(), document);
 
-        // Watch for document-related file changes
+        // Watch for assembly file and reload it on change
         let watcher = workspace.createFileSystemWatcher(uri.path);
         watcher.onDidChange(fileUri => this.reloadAsmDocument(fileUri));
         watcher.onDidCreate(fileUri => this.reloadAsmDocument(fileUri));

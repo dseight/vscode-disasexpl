@@ -33,6 +33,7 @@ export class AsmDecorator {
         });
 
         const uri = asmEditor.document.uri;
+        // rebuild decorations on asm document change
         const providerEventRegistration = provider.onDidChange(changedUri => {
             if (changedUri.toString() === uri.toString()) {
                 this.load(uri);
@@ -44,7 +45,9 @@ export class AsmDecorator {
             this.selectedLineDecorationType,
             this.unusedLineDecorationType,
             providerEventRegistration,
-            window.onDidChangeTextEditorSelection( _ => this.update()),
+            window.onDidChangeTextEditorSelection(e => {
+                this.updateSelection(e.textEditor);
+            }),
             window.onDidChangeVisibleTextEditors(editors => {
                 // decorations are useless if one of editors become invisible
                 if (editors.indexOf(srcEditor) === -1 || editors.indexOf(asmEditor) === -1) {
@@ -70,10 +73,10 @@ export class AsmDecorator {
         }
     }
 
-    update() {
-        if (window.activeTextEditor === this.srcEditor) {
+    updateSelection(editor: TextEditor) {
+        if (editor === this.srcEditor) {
             this.srcLineSelected(this.srcEditor.selection.start.line);
-        } else if (window.activeTextEditor === this.asmEditor) {
+        } else if (editor === this.asmEditor) {
             this.asmLineSelected(this.asmEditor.selection.start.line);
         }
     }
@@ -89,8 +92,8 @@ export class AsmDecorator {
     }
 
     private srcLineSelected(line: number) {
-        const sourceLineRange = this.srcEditor.document.lineAt(line).range;
-        this.srcEditor.setDecorations(this.selectedLineDecorationType, [sourceLineRange]);
+        const srcLineRange = this.srcEditor.document.lineAt(line).range;
+        this.srcEditor.setDecorations(this.selectedLineDecorationType, [srcLineRange]);
 
         const asmLinesRanges: Range[] = [];
         let mapped = this.mappings.get(line);
@@ -116,9 +119,9 @@ export class AsmDecorator {
         this.asmEditor.setDecorations(this.selectedLineDecorationType, [asmLineRange]);
 
         if (asmLine.source !== undefined) {
-            const sourceLineRange = this.srcEditor.document.lineAt(asmLine.source.line - 1).range;
-            this.srcEditor.setDecorations(this.selectedLineDecorationType, [sourceLineRange]);
-            this.srcEditor.revealRange(sourceLineRange, TextEditorRevealType.InCenterIfOutsideViewport);
+            const srcLineRange = this.srcEditor.document.lineAt(asmLine.source.line - 1).range;
+            this.srcEditor.setDecorations(this.selectedLineDecorationType, [srcLineRange]);
+            this.srcEditor.revealRange(srcLineRange, TextEditorRevealType.InCenterIfOutsideViewport);
         } else {
             this.srcEditor.setDecorations(this.selectedLineDecorationType, []);
         }

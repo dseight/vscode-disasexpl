@@ -21,7 +21,7 @@ export class AsmDocument {
             this.lines = new AsmParser().process(doc.getText(), new AsmFilter());
         }, err => {
             this.lines = [new AsmLine(`Failed to load file '${this._uri.path}'`, undefined)];
-        }).then( _ => {
+        }).then(_ => {
             let mapping = this.sourceToAsmMapping;
             mapping.clear();
 
