@@ -11,7 +11,7 @@ export class AsmDecorator {
     private provider: AsmProvider;
     private selectedLineDecorationType: TextEditorDecorationType;
     private unusedLineDecorationType: TextEditorDecorationType;
-    private disposable: Disposable;
+    private registrations: Disposable;
     private document: AsmDocument;
 
     // mappings from source lines to assembly lines
@@ -40,15 +40,22 @@ export class AsmDecorator {
         });
         this.load(uri);
 
-        this.disposable = Disposable.from(
+        this.registrations = Disposable.from(
             this.selectedLineDecorationType,
             this.unusedLineDecorationType,
             providerEventRegistration,
+            window.onDidChangeTextEditorSelection( _ => this.update()),
+            window.onDidChangeVisibleTextEditors(editors => {
+                // decorations are useless if one of editors become invisible
+                if (editors.indexOf(srcEditor) === -1 || editors.indexOf(asmEditor) === -1) {
+                    this.dispose();
+                }
+            })
         );
     }
 
     dispose() {
-        this.disposable.dispose();
+        this.registrations.dispose();
     }
 
     load(uri: Uri) {
