@@ -1,8 +1,8 @@
 {
     "name": "disasexpl",
-    "displayName": "disasexpl",
-    "description": "",
-    "version": "0.0.1",
+    "displayName": "Disassembly Explorer",
+    "description": "Show disassembly to source relations",
+    "version": "0.0.2",
     "publisher": "dseight",
     "repository": {
         "type": "git",
@@ -69,8 +69,5 @@
         "tslint": "^5.8.0",
         "typescript": "^2.6.1",
         "vscode": "^1.1.6"
-    },
-    "dependencies": {
-        "underscore": "^1.9.1"
     }
 }
