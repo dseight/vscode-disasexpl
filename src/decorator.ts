@@ -13,7 +13,7 @@ export class AsmDecorator {
     private selectedLineDecorationType: TextEditorDecorationType;
     private unusedLineDecorationType: TextEditorDecorationType;
     private registrations: Disposable;
-    private document: AsmDocument;
+    private document!: AsmDocument;
 
     // mappings from source lines to assembly lines
     private mappings = new Map<number, number[]>();

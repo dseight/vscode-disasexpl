@@ -4,6 +4,10 @@
     "description": "",
     "version": "0.0.1",
     "publisher": "dseight",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/dseight/vscode-disasexpl"
+    },
     "engines": {
         "vscode": "^1.23.0"
     },
@@ -11,7 +15,7 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:editor.showDisassembly"
+        "onCommand:disasexpl.show"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -45,8 +49,9 @@
         ],
         "commands": [
             {
-                "command": "editor.showDisassembly",
-                "title": "Show disassembly"
+                "command": "disasexpl.show",
+                "title": "Show",
+                "category": "Disassembly Explorer"
             }
         ]
     },

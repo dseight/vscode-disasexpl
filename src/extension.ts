@@ -5,10 +5,6 @@ import { AsmProvider, encodeAsmUri } from './provider';
 import { AsmDecorator } from './decorator';
 
 export function activate(context: ExtensionContext) {
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('disasexpl now active');
-
     const provider = new AsmProvider();
 
     // register content provider for scheme `disassembly`
@@ -17,7 +13,7 @@ export function activate(context: ExtensionContext) {
 
     // register command that crafts an uri with the `disassembly` scheme,
     // open the dynamic document, and shows it in the next editor
-    const commandRegistration = commands.registerTextEditorCommand('editor.showDisassembly', srcEditor => {
+    const commandRegistration = commands.registerTextEditorCommand('disasexpl.show', srcEditor => {
         let asmUri = encodeAsmUri(srcEditor.document.uri);
 
         workspace.openTextDocument(asmUri).then(doc => {

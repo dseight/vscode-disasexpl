@@ -1,6 +1,17 @@
 # Disassembly Explorer
 
-Shows the filtered assembly output and it relations to original source.
+Shows disassembly to source relations and dims unused source lines.
+
+This extension is based on [Compiler Explorer](https://github.com/mattgodbolt/compiler-explorer)
+(especially on AsmParser class from it).
+
+![Disassembly Explorer Preview](preview.gif)
+
+## Usage
+
+At first, you need disassembly of your source files. That's because the
+extension do not know anything about your project structure, compiler and
+compilation flags.
 
 Regular disassembly may be generated with:
 
@@ -10,20 +21,21 @@ Objdumped disassembly should be generated with lines info:
 
     objdump -d compiled.bin -l > disassembly.S
 
+Next, when you generated disassembly, you should tell to extension, where to
+search disassembly. By default it is searched right near the source file, but
+with `.S` extension:
+
+```json
+"disasexpl.associations": {
+    "**/*.c": "${fileDirname}/${fileBasenameNoExtension}.S",
+    "**/*.cpp": "${fileDirname}/${fileBasenameNoExtension}.S"
+}
+```
+
+Now, when all is done, simply select `F1 > Disassembly Explorer: Show`.
+Disassembly will be opened on the right side of your source.
+
 ## TODO
 
-- [x] Highlight asm lines related to selected source line and vice versa
-- [x] Higlight current line immediately (not only on selection change)
-- [x] Remove decorations when user switches to different file
-- [ ] Restore decorations when user switches to original file
-- [x] Scroll to first highlighted line if it is out of view
-- [ ] Colorize source and asm lines as in Compiler Explorer
-- [x] Tint unused source lines
-- [x] Add configuration for relations of source path to disassembly path
-- [x] Add configuration option for binary asm parsing
-- [x] If asm file was missing, try to reload on next time instead of showing
-      cached document
-- [x] Be aware of file changes (asm should be reloaded)
-- [x] Do not suppose that asm has only one source file - this may lead to
-      false-positive line matches
 - [ ] Provide links for lines like `ja 24a7 <rasterize+0x7d7>`
+- [ ] Colorize source and asm lines as in Compiler Explorer
