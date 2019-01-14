@@ -131,6 +131,5 @@ function resolvePath(path: string, associated: string): string {
         }
     });
 
-    // normalize a path, reducing '..' and '.' parts
-    return Path.normalize(resolvedPath);
+    return resolvedPath;
 }
