@@ -38,7 +38,7 @@ export class AsmProvider implements TextDocumentContentProvider {
     }
 
     reloadAsmDocument(fileUri: Uri) {
-        const uri = fileUri.with({scheme: AsmProvider.scheme});
+        const uri = fileUri.with({ scheme: AsmProvider.scheme });
         const document = new AsmDocument(uri, this._onDidChange);
         this._documents.set(uri.toString(), document);
         this._onDidChange.fire(uri);
@@ -78,12 +78,12 @@ export function encodeAsmUri(uri: Uri): Uri {
         if (doc === undefined) {
             continue;
         }
-        let match = languages.match({pattern: key}, doc);
+        let match = languages.match({ pattern: key }, doc);
         if (match > 0) {
             let associated = associations[key];
             return uri.with({
                 scheme: AsmProvider.scheme,
-                path: resolvePath(uri.path, associated)
+                path: resolvePath(uri.fsPath, associated)
             });
         }
     }
@@ -99,7 +99,7 @@ function resolvePath(path: string, associated: string): string {
     }
 
     let parsedFilePath = Path.parse(path);
-    let parsedWorkspacePath = Path.parse(workspace.workspaceFolders[0].uri.path);
+    let parsedWorkspacePath = Path.parse(workspace.workspaceFolders[0].uri.fsPath);
 
     let variables: any = {
         // the path of the folder opened in VS Code
@@ -131,5 +131,6 @@ function resolvePath(path: string, associated: string): string {
         }
     });
 
-    return resolvedPath;
+    // normalize a path, reducing '..' and '.' parts
+    return Path.normalize(resolvedPath);
 }
