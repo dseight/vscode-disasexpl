@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.0.3 - 2019-01-16
+### Changed
+- Fix broken path resolving on Windows.
+
 ## 0.0.2 - 2018-08-02
 ### Changed
 - Extension display name and description.
