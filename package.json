@@ -2,7 +2,7 @@
     "name": "disasexpl",
     "displayName": "Disassembly Explorer",
     "description": "Show disassembly to source relations",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "publisher": "dseight",
     "repository": {
         "type": "git",
