@@ -234,9 +234,9 @@ export class AsmParser {
             const match = line.match(this.fileFind);
             if (match) {
                 const lineNum = parseInt(match[1]);
-                if (match[3]) {
+                if (match[4]) {
                     // Clang-style file directive '.file X "dir" "filename"'
-                    files.set(lineNum, match[2] + "/" + match[3]);
+                    files.set(lineNum, match[2] + "/" + match[4]);
                 } else {
                     files.set(lineNum, match[2]);
                 }
