@@ -59,16 +59,15 @@
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+        "lint": "eslint . --ext .ts,.tsx",
+        "watch": "tsc -watch -p ./"
     },
     "devDependencies": {
         "@types/mocha": "^2.2.42",
-        "@types/node": "^7.10.6",
-        "@types/underscore": "^1.8.18",
-        "tslint": "^5.16.0",
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.34"
+        "@types/node": "^7.10.13",
+        "@types/underscore": "^1.10.23",
+        "tslint": "^5.20.1",
+        "typescript": "^3.5.1",
+        "@types/vscode": "^1.23.0"
     }
 }
