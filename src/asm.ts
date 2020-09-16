@@ -136,7 +136,13 @@ export class AsmParser {
         const labelsUsed = new Set<string>();
         const weakUsages = new Map<string, string[]>();
         const labelFind = this.labelFindFor(asmLines);
-        let currentLabel = "";
+        // The current label set is the set of labels all pointing at the current code, so:
+        // foo:
+        // bar:
+        //    add r0, r0, #1
+        // in this case [foo, bar] would be the label set for the add instruction.
+        let currentLabelSet = new Array<string>();
+        let inLabelGroup = false;
         let inCustomAssembly = 0;
 
         // Scan through looking for definite label usages (ones used by opcodes),
@@ -160,7 +166,14 @@ export class AsmParser {
 
             let match = line.match(this.labelDef);
             if (match) {
-                currentLabel = match[1];
+                if (inLabelGroup) {
+                    currentLabelSet.push(match[1]);
+                } else {
+                    currentLabelSet = [match[1]];
+                }
+                inLabelGroup = true;
+            } else {
+                inLabelGroup = false;
             }
 
             match = line.match(this.definesGlobal);
@@ -183,16 +196,18 @@ export class AsmParser {
             if (!filterDirectives || this.hasOpcode(line) || line.match(this.definesFunction)) {
                 // Only count a label as used if it's used by an opcode, or else we're not filtering directives.
                 match.forEach(label => labelsUsed.add(label));
-            } else if (currentLabel) {
-                // If we have a current label, then any subsequent opcode or data definition's labels are refered to
+            } else {
+                // If we have a current label, then any subsequent opcode or data definition's labels are referred to
                 // weakly by that label.
                 const isDataDefinition = !!line.match(this.dataDefn);
                 const isOpcode = this.hasOpcode(line);
                 if (isDataDefinition || isOpcode) {
-                    if (weakUsages.get(currentLabel) === undefined) {
-                        weakUsages.set(currentLabel, []);
-                    }
-                    match.forEach(label => weakUsages.get(currentLabel)!.push(label));
+                    currentLabelSet.forEach(currentLabel => {
+                        if (weakUsages.get(currentLabel) === undefined) {
+                            weakUsages.set(currentLabel, []);
+                        }
+                        match.forEach(label => weakUsages.get(currentLabel)!.push(label));
+                    });
                 }
             }
         });
