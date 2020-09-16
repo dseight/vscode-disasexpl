@@ -74,7 +74,7 @@ export class AsmParser {
     // MIPS labels can start with a $ sign, but other assemblers use $ to mean literal.
     labelFindMips = /[$.a-zA-Z_][a-zA-Z0-9$_.]*/g;
     mipsLabelDefinition = /^\$[a-zA-Z0-9$_.]+:/;
-    dataDefn = /^\s*\.(string|asciz|ascii|[1248]?byte|short|word|long|quad|value|zero)/;
+    dataDefn = /^\s*\.(string|asciz|ascii|[1248]?byte|short|x?word|long|quad|value|zero)/;
     fileFind = /^\s*\.file\s+(\d+)\s+"([^"]+)"(\s+"([^"]+)")?.*/;
     hasOpcodeRe = /^\s*[a-zA-Z]/;
     definesFunction = /^\s*\.type.*,\s*[@%]function$/;
