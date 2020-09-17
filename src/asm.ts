@@ -263,7 +263,7 @@ export class AsmParser {
     processAsm(asm: string, filter: AsmFilter): AsmLine[] {
         if (filter.commentOnly) {
             // Remove any block comments that start and end on a line if we're removing comment-only lines.
-            const blockComments = /^\s*\/\*(\*(?!\/)|[^*])*\*\/\s*\r?\n/mg;
+            const blockComments = /^[ \t]*\/\*(\*(?!\/)|[^*])*\*\/\s*/mg;
             asm = asm.replace(blockComments, "");
         }
 
