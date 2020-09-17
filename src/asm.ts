@@ -68,7 +68,7 @@ export class BinaryAsmLine extends AsmLine {
 
 export class AsmParser {
 
-    labelDef = /^([.a-z_$@][a-z0-9$_@.]*):/i;
+    labelDef = /^(?:.proc\s+)?([.a-z_$@][a-z0-9$_@.]*):/i;
 
     labelFindNonMips = /[.a-zA-Z_][a-zA-Z0-9$_.]*/g;
     // MIPS labels can start with a $ sign, but other assemblers use $ to mean literal.
@@ -78,7 +78,7 @@ export class AsmParser {
     fileFind = /^\s*\.file\s+(\d+)\s+"([^"]+)"(\s+"([^"]+)")?.*/;
     hasOpcodeRe = /^\s*[a-zA-Z]/;
     hasNvccOpcodeRe = /^\s*[a-zA-Z|@]/;
-    definesFunction = /^\s*\.type.*,\s*[@%]function$/;
+    definesFunction = /^\s*\.(type.*,\s*[@%]function|proc\s+[.a-zA-Z_][a-zA-Z0-9$_.]*:.*)$/;
     definesGlobal = /^\s*\.globa?l\s*([.a-zA-Z_][a-zA-Z0-9$_.]*)/;
     indentedLabelDef = /^\s*([.a-zA-Z_$][a-zA-Z0-9$_.]*):/;
     assignmentDef = /^\s*([.a-zA-Z_$][a-zA-Z0-9$_.]+)\s*=/;
@@ -94,9 +94,9 @@ export class AsmParser {
     lineRe = /^(\/[^:]+):([0-9]+).*/;
     labelRe = /^([0-9a-f]+)\s+<([^>]+)>:$/;
     destRe = /.*\s([0-9a-f]+)\s+<([^>]+)>$/;
+    commentRe = /[#;]/;
 
     binaryHideFuncRe: RegExp | undefined;
-    inNvccDef = false;
 
     hasOpcode(line: string, inNvccCode: boolean) {
         // Remove any leading label definition...
@@ -105,7 +105,7 @@ export class AsmParser {
             line = line.substr(match[0].length);
         }
         // Strip any comments
-        line = line.split(/[#;]/, 1)[0];
+        line = line.split(this.commentRe, 1)[0];
         // Detect assignment, that's not an opcode...
         if (line.match(this.assignmentDef)) {
             return false;
@@ -182,7 +182,8 @@ export class AsmParser {
                 labelsUsed.add(match[1]);
             }
 
-            if (!line || line[0] === '.') {
+            const definesFunction = line.match(this.definesFunction);
+            if (!definesFunction && (!line || line[0] === '.')) {
                 return;
             }
 
@@ -191,7 +192,7 @@ export class AsmParser {
                 return;
             }
 
-            if (!filterDirectives || this.hasOpcode(line, false) || line.match(this.definesFunction)) {
+            if (!filterDirectives || this.hasOpcode(line, false) || definesFunction) {
                 // Only count a label as used if it's used by an opcode, or else we're not filtering directives.
                 match.forEach(label => labelsUsed.add(label));
             } else {
@@ -276,28 +277,22 @@ export class AsmParser {
         const commentOnly = /^\s*(((#|@|;|\/\/).*)|(\/\*.*\*\/))$/;
         const commentOnlyNvcc = /^\s*(((#|;|\/\/).*)|(\/\*.*\*\/))$/;
         const sourceTag = /^\s*\.loc\s+(\d+)\s+(\d+).*/;
+        const source6502Dbg = /^\s*\.dbg\s+line,\s*"([^"]+)",\s*(\d+)/;
+        const source6502DbgEnd = /^\s*\.dbg\s+line[^,]/;
         const sourceStab = /^\s*\.stabn\s+(\d+),0,(\d+),.*/;
         const stdInLooking = /.*<stdin>|^-$|example\.[^/]+$|<source>/;
         const endBlock = /\.(cfi_endproc|data|text|section)/;
         let source: AsmSource | undefined;
 
-        let inNvccDef = false;
-        let inNvccCode = false;
-
-        let inCustomAssembly = 0;
-        asmLines.forEach(line => {
-            let match;
-            if (line.trim() === "") {
+        function maybeAddBlank() {
+            const lastBlank = result.length === 0 || result[result.length - 1].text === "";
+            if (!lastBlank) {
                 result.push(new AsmLine("", undefined));
-                return;
             }
+        }
 
-            if (line.match(this.startAppBlock) || line.match(this.startAsmNesting)) {
-                inCustomAssembly++;
-            } else if (line.match(this.endAppBlock) || line.match(this.endAsmNesting)) {
-                inCustomAssembly--;
-            }
-            match = line.match(sourceTag);
+        function handleSource(line: string) {
+            const match = line.match(sourceTag);
             if (match) {
                 const file = files.get(parseInt(match[1]));
                 const sourceLine = parseInt(match[2]);
@@ -310,20 +305,59 @@ export class AsmParser {
                     source = undefined;
                 }
             }
-            match = line.match(sourceStab);
-            if (match) {
-                // cf http://www.math.utah.edu/docs/info/stabs_11.html#SEC48
-                switch (parseInt(match[1])) {
-                    case 68:
-                        source = new AsmSource(undefined, parseInt(match[2]));
-                        break;
-                    case 132:
-                    case 100:
-                        source = undefined;
-                        prevLabel = undefined;
-                        break;
-                }
+        }
+
+        function handleStabs(line: string) {
+            const match = line.match(sourceStab);
+            if (!match) {
+                return;
             }
+            // cf http://www.math.utah.edu/docs/info/stabs_11.html#SEC48
+            switch (parseInt(match[1])) {
+                case 68:
+                    source = new AsmSource(undefined, parseInt(match[2]));
+                    break;
+                case 132:
+                case 100:
+                    source = undefined;
+                    prevLabel = undefined;
+                    break;
+            }
+        }
+
+        function handle6502(line: string) {
+            const match = line.match(source6502Dbg);
+            if (match) {
+                const file = match[1];
+                const sourceLine = parseInt(match[2]);
+                source = new AsmSource(
+                    !file.match(stdInLooking) ? file : undefined,
+                    sourceLine
+                );
+            } else if (line.match(source6502DbgEnd)) {
+                source = undefined;
+            }
+        }
+
+        let inNvccDef = false;
+        let inNvccCode = false;
+
+        let inCustomAssembly = 0;
+        asmLines.forEach(line => {
+            if (line.trim() === "") {
+                return maybeAddBlank();
+            }
+
+            if (line.match(this.startAppBlock) || line.match(this.startAsmNesting)) {
+                inCustomAssembly++;
+            } else if (line.match(this.endAppBlock) || line.match(this.endAsmNesting)) {
+                inCustomAssembly--;
+            }
+
+            handleSource(line);
+            handleStabs(line);
+            handle6502(line);
+
             if (line.match(endBlock) || (inNvccCode && line.match(/}/))) {
                 source = undefined;
                 prevLabel = undefined;
@@ -340,7 +374,7 @@ export class AsmParser {
                 line = this.fixLabelIndentation(line);
             }
 
-            match = line.match(this.labelDef);
+            let match = line.match(this.labelDef);
             if (!match) {
                 match = line.match(this.assignmentDef);
             }
