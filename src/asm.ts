@@ -25,7 +25,7 @@
 // Following code is a bit differs from Compiler Explorer's version
 // to better fit needs of Disassembly Explorer
 
-import { splitLines, expandTabs } from './utils';
+import { splitLines, expandTabs, squashHorizontalWhitespace } from './utils';
 
 export class AsmFilter {
     trim: boolean = true;
@@ -120,13 +120,7 @@ export class AsmParser {
         if (!filter.trim) {
             return line;
         }
-        const splat = line.split(/\s+/);
-        if (splat[0] === "") {
-            // An indented line: preserve a two-space indent
-            return "  " + splat.slice(1).join(" ");
-        } else {
-            return splat.join(" ");
-        }
+        return squashHorizontalWhitespace(line, true);
     }
 
     labelFindFor(asmLines: string[]) {

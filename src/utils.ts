@@ -24,6 +24,7 @@
 
 const tabsRe = /\t/g;
 const lineRe = /\r?\n/;
+const findQuotes = /(.*?)("(?:[^"\\]|\\.)*")(.*)/;
 
 export function splitLines(text: string) {
     const result = text.split(lineRe);
@@ -41,4 +42,19 @@ export function expandTabs(line: string) {
         extraChars += spacesNeeded - 1;
         return "        ".substr(spacesNeeded);
     });
+}
+
+export function squashHorizontalWhitespace(line: string, atStart: boolean): string {
+    const quotes = line.match(findQuotes);
+    if (quotes) {
+        return squashHorizontalWhitespace(quotes[1], atStart) + quotes[2] +
+            squashHorizontalWhitespace(quotes[3], false);
+    }
+    const splat = line.split(/\s+/);
+    if (splat[0] === "" && atStart) {
+        // An indented line: preserve a two-space indent
+        return "  " + splat.slice(1).join(" ");
+    } else {
+        return splat.join(" ");
+    }
 }
