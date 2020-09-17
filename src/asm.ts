@@ -77,6 +77,7 @@ export class AsmParser {
     dataDefn = /^\s*\.(string|asciz|ascii|[1248]?byte|short|x?word|long|quad|value|zero)/;
     fileFind = /^\s*\.file\s+(\d+)\s+"([^"]+)"(\s+"([^"]+)")?.*/;
     hasOpcodeRe = /^\s*[a-zA-Z]/;
+    hasNvccOpcodeRe = /^\s*[a-zA-Z|@]/;
     definesFunction = /^\s*\.type.*,\s*[@%]function$/;
     definesGlobal = /^\s*\.globa?l\s*([.a-zA-Z_][a-zA-Z0-9$_.]*)/;
     indentedLabelDef = /^\s*([.a-zA-Z_$][a-zA-Z0-9$_.]*):/;
@@ -97,7 +98,7 @@ export class AsmParser {
     binaryHideFuncRe: RegExp | undefined;
     inNvccDef = false;
 
-    hasOpcode(line: string) {
+    hasOpcode(line: string, inNvccCode: boolean) {
         // Remove any leading label definition...
         const match = line.match(this.labelDef);
         if (match) {
@@ -108,6 +109,9 @@ export class AsmParser {
         // Detect assignment, that's not an opcode...
         if (line.match(this.assignmentDef)) {
             return false;
+        }
+        if (inNvccCode) {
+            return !!line.match(this.hasNvccOpcodeRe);
         }
         return !!line.match(this.hasOpcodeRe);
     }
@@ -193,14 +197,14 @@ export class AsmParser {
                 return;
             }
 
-            if (!filterDirectives || this.hasOpcode(line) || line.match(this.definesFunction)) {
+            if (!filterDirectives || this.hasOpcode(line, false) || line.match(this.definesFunction)) {
                 // Only count a label as used if it's used by an opcode, or else we're not filtering directives.
                 match.forEach(label => labelsUsed.add(label));
             } else {
                 // If we have a current label, then any subsequent opcode or data definition's labels are referred to
                 // weakly by that label.
                 const isDataDefinition = !!line.match(this.dataDefn);
-                const isOpcode = this.hasOpcode(line);
+                const isOpcode = this.hasOpcode(line, false);
                 if (isDataDefinition || isOpcode) {
                     currentLabelSet.forEach(currentLabel => {
                         if (weakUsages.get(currentLabel) === undefined) {
@@ -276,6 +280,7 @@ export class AsmParser {
         let prevLabel: string | undefined = "";
 
         const commentOnly = /^\s*(((#|@|;|\/\/).*)|(\/\*.*\*\/))$/;
+        const commentOnlyNvcc = /^\s*(((#|;|\/\/).*)|(\/\*.*\*\/))$/;
         const sourceTag = /^\s*\.loc\s+(\d+)\s+(\d+).*/;
         const sourceStab = /^\s*\.stabn\s+(\d+),0,(\d+),.*/;
         const stdInLooking = /.*<stdin>|^-$|example\.[^/]+$|<source>/;
@@ -330,7 +335,10 @@ export class AsmParser {
                 prevLabel = undefined;
             }
 
-            if (filter.commentOnly && line.match(commentOnly)) {
+            if (filter.commentOnly &&
+                ((line.match(commentOnly) && !inNvccCode) ||
+                    (line.match(commentOnlyNvcc) && inNvccCode))
+            ) {
                 return;
             }
 
@@ -379,7 +387,10 @@ export class AsmParser {
             }
 
             line = expandTabs(line);
-            result.push(new AsmLine(this.filterAsmLine(line, filter), this.hasOpcode(line) ? source : undefined));
+            result.push(new AsmLine(
+                this.filterAsmLine(line, filter),
+                this.hasOpcode(line, inNvccCode) ? source : undefined
+            ));
         });
         return result;
     }
