@@ -274,7 +274,11 @@ export class AsmParser {
         const files = this.parseFiles(asmLines);
         let prevLabel: string | undefined = "";
 
-        const commentOnly = /^\s*(((#|@|;|\/\/).*)|(\/\*.*\*\/))$/;
+        // Lines matching the following pattern are considered comments:
+        // - starts with '#', '@', '//' or a single ';' (non repeated)
+        // - starts with ';;' and has non-whitespace before end of line
+        const commentOnly = /^\s*(((#|@|\/\/).*)|(\/\*.*\*\/)|(;\s*)|(;[^;].*)|(;;.*\S.*))$/;
+
         const commentOnlyNvcc = /^\s*(((#|;|\/\/).*)|(\/\*.*\*\/))$/;
         const sourceTag = /^\s*\.loc\s+(\d+)\s+(\d+).*/;
         const source6502Dbg = /^\s*\.dbg\s+line,\s*"([^"]+)",\s*(\d+)/;
