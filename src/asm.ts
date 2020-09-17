@@ -282,6 +282,9 @@ export class AsmParser {
         const endBlock = /\.(cfi_endproc|data|text|section)/;
         let source: AsmSource | undefined;
 
+        let inNvccDef = false;
+        let inNvccCode = false;
+
         let inCustomAssembly = 0;
         asmLines.forEach(line => {
             let match;
@@ -322,7 +325,7 @@ export class AsmParser {
                         break;
                 }
             }
-            if (line.match(endBlock)) {
+            if (line.match(endBlock) || (inNvccCode && line.match(/}/))) {
                 source = undefined;
                 prevLabel = undefined;
             }
@@ -343,7 +346,8 @@ export class AsmParser {
             if (!match) {
                 match = line.match(this.cudaBeginDef);
                 if (match) {
-                    this.inNvccDef = true;
+                    inNvccDef = true;
+                    inNvccCode = true;
                 }
             }
             if (match) {
@@ -358,9 +362,9 @@ export class AsmParser {
                     prevLabel = match[0];
                 }
             }
-            if (this.inNvccDef) {
+            if (inNvccDef) {
                 if (line.match(this.cudaEndDef)) {
-                    this.inNvccDef = false;
+                    inNvccDef = false;
                 }
             } else if (!match && filter.directives) {
                 // Check for directives only if it wasn't a label; the regexp would
