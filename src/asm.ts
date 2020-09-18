@@ -206,7 +206,7 @@ export class AsmParser {
                         if (weakUsages.get(currentLabel) === undefined) {
                             weakUsages.set(currentLabel, []);
                         }
-                        match.forEach(label => weakUsages.get(currentLabel)!.push(label));
+                        match!.forEach(label => weakUsages.get(currentLabel)!.push(label));
                     });
                 }
             }
