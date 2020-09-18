@@ -102,33 +102,33 @@ export class AsmParser {
 
     labelDef = /^(?:.proc\s+)?([.a-z_$@][a-z0-9$_@.]*):/i;
 
-    labelFindNonMips = /[.a-zA-Z_][a-zA-Z0-9$_.]*/g;
+    labelFindNonMips = /[.A-Z_a-z][\w$.]*/g;
     // MIPS labels can start with a $ sign, but other assemblers use $ to mean literal.
-    labelFindMips = /[$.a-zA-Z_][a-zA-Z0-9$_.]*/g;
-    mipsLabelDefinition = /^\$[a-zA-Z0-9$_.]+:/;
+    labelFindMips = /[$.A-Z_a-z][\w$.]*/g;
+    mipsLabelDefinition = /^\$[\w$.]+:/;
     dataDefn = /^\s*\.(string|asciz|ascii|[1248]?byte|short|x?word|long|quad|value|zero)/;
     fileFind = /^\s*\.file\s+(\d+)\s+"([^"]+)"(\s+"([^"]+)")?.*/;
-    hasOpcodeRe = /^\s*[a-zA-Z]/;
-    instructionRe = /^\s*[a-zA-Z]+/;
-    identifierFindRe = /[.a-zA-Z_$@][a-zA-z0-9_]*/g;
-    hasNvccOpcodeRe = /^\s*[a-zA-Z|@]/;
-    definesFunction = /^\s*\.(type.*,\s*[@%#]function|proc\s+[.a-zA-Z_][a-zA-Z0-9$_.]*:.*)$/;
-    definesGlobal = /^\s*\.(?:globa?l|GLB|export)\s*([.a-zA-Z_][a-zA-Z0-9$_.]*)/;
-    definesWeak = /^\s*\.(?:weak|weakext)\s*([.a-zA-Z_][a-zA-Z0-9$_.]*)/;
-    indentedLabelDef = /^\s*([.a-zA-Z_$][a-zA-Z0-9$_.]*):/;
-    assignmentDef = /^\s*([.a-zA-Z_$][a-zA-Z0-9$_.]+)\s*=/;
+    hasOpcodeRe = /^\s*[A-Za-z]/;
+    instructionRe = /^\s*[A-Za-z]+/;
+    identifierFindRe = /[$.@A-Z_a-z][\dA-z]*/g;
+    hasNvccOpcodeRe = /^\s*[@A-Za-z|]/;
+    definesFunction = /^\s*\.(type.*,\s*[#%@]function|proc\s+[.A-Z_a-z][\w$.]*:.*)$/;
+    definesGlobal = /^\s*\.(?:globa?l|GLB|export)\s*([.A-Z_a-z][\w$.]*)/;
+    definesWeak = /^\s*\.(?:weak|weakext)\s*([.A-Z_a-z][\w$.]*)/;
+    indentedLabelDef = /^\s*([$.A-Z_a-z][\w$.]*):/;
+    assignmentDef = /^\s*([$.A-Z_a-z][\w$.]+)\s*=/;
     directive = /^\s*\..*$/;
     startAppBlock = /\s*#APP.*/;
     endAppBlock = /\s*#NO_APP.*/;
     startAsmNesting = /\s*# Begin ASM.*/;
     endAsmNesting = /\s*# End ASM.*/;
-    cudaBeginDef = /.*\.(entry|func)\s+(?:\([^)]*\)\s*)?([.a-zA-Z_$][a-zA-Z0-9$_.]*)\($/;
+    cudaBeginDef = /\.(entry|func)\s+(?:\([^)]*\)\s*)?([$.A-Z_a-z][\w$.]*)\($/;
     cudaEndDef = /^\s*\)\s*$/;
 
-    asmOpcodeRe = /^\s*([0-9a-f]+):\s*(([0-9a-f][0-9a-f] ?)+)\s*(.*)/;
-    lineRe = /^(\/[^:]+):([0-9]+).*/;
-    labelRe = /^([0-9a-f]+)\s+<([^>]+)>:$/;
-    destRe = /.*\s([0-9a-f]+)\s+<([^>+]+)(\+0x[0-9a-f]+)?>$/;
+    asmOpcodeRe = /^\s*([\da-f]+):\s*(([\da-f]{2} ?)+)\s*(.*)/;
+    lineRe = /^(\/[^:]+):(\d+).*/;
+    labelRe = /^([\da-f]+)\s+<([^>]+)>:$/;
+    destRe = /\s([\da-f]+)\s+<([^+>]+)(\+0x[\da-f]+)?>$/;
     commentRe = /[#;]/;
 
     binaryHideFuncRe: RegExp | undefined;
@@ -288,7 +288,7 @@ export class AsmParser {
                 const lineNum = parseInt(match[1]);
                 if (match[4]) {
                     // Clang-style file directive '.file X "dir" "filename"'
-                    files.set(lineNum, match[2] + "/" + match[4]);
+                    files.set(lineNum, match[2] + '/' + match[4]);
                 } else {
                     files.set(lineNum, match[2]);
                 }
@@ -313,7 +313,7 @@ export class AsmParser {
         const instruction = line.split(this.commentRe, 1)[0];
 
         // Remove the instruction.
-        const params = instruction.replace(this.instructionRe, "");
+        const params = instruction.replace(this.instructionRe, '');
 
         const removedCol = instruction.length - params.length + 1;
         params.replace(this.identifierFindRe, (label, index) => {
@@ -322,7 +322,7 @@ export class AsmParser {
                 label,
                 new AsmLabelRange(startCol, startCol + label.length)
             ));
-            return "";
+            return '';
         });
 
         return labelsInLine;
@@ -331,8 +331,8 @@ export class AsmParser {
     processAsm(asmResult: string, filter: AsmFilter): AsmParserResult {
         if (filter.commentOnly) {
             // Remove any block comments that start and end on a line if we're removing comment-only lines.
-            const blockComments = /^[ \t]*\/\*(\*(?!\/)|[^*])*\*\/\s*/mg;
-            asmResult = asmResult.replace(blockComments, "");
+            const blockComments = /^[\t ]*\/\*(\*(?!\/)|[^*])*\*\/\s*/gm;
+            asmResult = asmResult.replace(blockComments, '');
         }
 
         const asm: AsmLine[] = [];
@@ -341,7 +341,7 @@ export class AsmParser {
 
         const labelsUsed = this.findUsedLabels(asmLines, filter.directives);
         const files = this.parseFiles(asmLines);
-        let prevLabel: string | undefined = "";
+        let prevLabel: string | undefined = '';
 
         // Lines matching the following pattern are considered comments:
         // - starts with '#', '@', '//' or a single ';' (non repeated)
@@ -358,9 +358,9 @@ export class AsmParser {
         let source: AsmSource | undefined;
 
         function maybeAddBlank() {
-            const lastBlank = asm.length === 0 || asm[asm.length - 1].text === "";
+            const lastBlank = asm.length === 0 || asm[asm.length - 1].text === '';
             if (!lastBlank) {
-                asm.push(new AsmLine("", undefined, []));
+                asm.push(new AsmLine('', undefined, []));
             }
         }
 
@@ -417,7 +417,7 @@ export class AsmParser {
 
         let inCustomAssembly = 0;
         asmLines.forEach(line => {
-            if (line.trim() === "") {
+            if (line.trim() === '') {
                 return maybeAddBlank();
             }
 
@@ -508,7 +508,7 @@ export class AsmParser {
     fixLabelIndentation(line: string) {
         const match = line.match(this.indentedLabelDef);
         if (match) {
-            return line.replace(/^\s+/, "");
+            return line.replace(/^\s+/, '');
         } else {
             return line;
         }
@@ -525,7 +525,7 @@ export class AsmParser {
         const asm: AsmLine[] = [];
         const labelDefinitions = new Map<string, number>();
 
-        const asmLines = asmResult.split("\n");
+        const asmLines = asmResult.split('\n');
         let source: AsmSource | undefined;
         let func: string | undefined;
 
@@ -550,7 +550,7 @@ export class AsmParser {
             if (match) {
                 func = match[2];
                 if (this.isUserFunction(func)) {
-                    asm.push(new AsmLine(func + ":", undefined, labelsInLine));
+                    asm.push(new AsmLine(func + ':', undefined, labelsInLine));
                     labelDefinitions.set(func, asm.length);
                 }
                 return;
@@ -563,7 +563,7 @@ export class AsmParser {
             match = line.match(this.asmOpcodeRe);
             if (match) {
                 const address = parseInt(match[1], 16);
-                const opcodes = match[2].split(" ").filter(x => !!x).join(' ');
+                const opcodes = match[2].split(' ').filter(x => !!x).join(' ');
                 const disassembly = " " + this.filterAsmLine(match[4], filter);
                 asm.push(new BinaryAsmLine(disassembly, source, labelsInLine, address, opcodes));
             }
