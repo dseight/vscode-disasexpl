@@ -1,7 +1,7 @@
 'use strict';
 
 import { workspace, Uri, EventEmitter } from 'vscode';
-import { AsmParser, AsmLine, AsmFilter, BinaryAsmLine } from './asm';
+import { AsmParser, AsmLine, AsmFilter } from './asm';
 
 export class AsmDocument {
 
@@ -30,16 +30,7 @@ export class AsmDocument {
     }
 
     get value(): string {
-        let result = '';
-        this.lines.forEach(line => {
-            if (line instanceof BinaryAsmLine) {
-                let address = ("0000000" + line.address.toString(16)).substr(-8);
-                result += `<${address}> ${line.text}\n`;
-            } else {
-                result += line.text + '\n';
-            }
-        });
-        return result;
+        return this.lines.reduce((result, line) => result += line.value, '');
     }
 
 }

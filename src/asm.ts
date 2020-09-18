@@ -75,6 +75,10 @@ export class AsmLine {
         this.source = source;
         this.labels = labels;
     }
+
+    get value(): string {
+        return this.text + '\n';
+    }
 }
 
 export class BinaryAsmLine extends AsmLine {
@@ -85,6 +89,11 @@ export class BinaryAsmLine extends AsmLine {
         super(text, source, labels);
         this.address = address;
         this.opcodes = opcodes;
+    }
+
+    get value(): string {
+        const address = ('0000000' + this.address.toString(16)).substr(-8);
+        return `<${address}> ${this.text}\n`;
     }
 }
 
