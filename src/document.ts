@@ -24,7 +24,7 @@ export class AsmDocument {
             const filter = new AsmFilter();
             filter.binary = useBinaryParsing;
             this.lines = new AsmParser().process(doc.getText(), filter).asm;
-        }, err => {
+        }, _err => {
             this.lines = [new AsmLine(`Failed to load file '${this._uri.path}'`, undefined, [])];
         }).then(_ => this._emitter.fire(this._uri));
     }

@@ -36,7 +36,7 @@ export function splitLines(text: string) {
 
 export function expandTabs(line: string) {
     let extraChars = 0;
-    return line.replace(tabsRe, function (match, offset) {
+    return line.replace(tabsRe, function (_match, offset) {
         const total = offset + extraChars;
         const spacesNeeded = (total + 8) & 7;
         extraChars += spacesNeeded - 1;
