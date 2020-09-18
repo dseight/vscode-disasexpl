@@ -45,13 +45,35 @@ export class AsmSource {
     }
 }
 
+export class AsmLabelRange {
+    startCol: number;
+    endCol: number;
+
+    constructor(startCol: number, endCol: number) {
+        this.startCol = startCol;
+        this.endCol = endCol;
+    }
+}
+
+export class AsmLabel {
+    name: string;
+    range: AsmLabelRange;
+
+    constructor(name: string, range: AsmLabelRange) {
+        this.name = name;
+        this.range = range;
+    }
+}
+
 export class AsmLine {
     text: string;
     source: AsmSource | undefined;
+    labels: AsmLabel[];
 
-    constructor(text: string, source: AsmSource | undefined) {
+    constructor(text: string, source: AsmSource | undefined, labels: AsmLabel[]) {
         this.text = text;
         this.source = source;
+        this.labels = labels;
     }
 }
 
@@ -59,10 +81,20 @@ export class BinaryAsmLine extends AsmLine {
     address: number;
     opcodes: string;
 
-    constructor(text: string, source: AsmSource | undefined, address: number, opcodes: string) {
-        super(text, source);
+    constructor(text: string, source: AsmSource | undefined, labels: AsmLabel[], address: number, opcodes: string) {
+        super(text, source, labels);
         this.address = address;
         this.opcodes = opcodes;
+    }
+}
+
+export class AsmParserResult {
+    asm: AsmLine[];
+    labelDefinitions: Map<string, number>;
+
+    constructor(asm: AsmLine[], labelDefinitions: Map<string, number>) {
+        this.asm = asm;
+        this.labelDefinitions = labelDefinitions;
     }
 }
 
@@ -77,6 +109,8 @@ export class AsmParser {
     dataDefn = /^\s*\.(string|asciz|ascii|[1248]?byte|short|x?word|long|quad|value|zero)/;
     fileFind = /^\s*\.file\s+(\d+)\s+"([^"]+)"(\s+"([^"]+)")?.*/;
     hasOpcodeRe = /^\s*[a-zA-Z]/;
+    instructionRe = /^\s*[a-zA-Z]+/;
+    identifierFindRe = /[.a-zA-Z_$@][a-zA-z0-9_]*/g;
     hasNvccOpcodeRe = /^\s*[a-zA-Z|@]/;
     definesFunction = /^\s*\.(type.*,\s*[@%]function|proc\s+[.a-zA-Z_][a-zA-Z0-9$_.]*:.*)$/;
     definesGlobal = /^\s*\.globa?l\s*([.a-zA-Z_][a-zA-Z0-9$_.]*)/;
@@ -93,7 +127,7 @@ export class AsmParser {
     asmOpcodeRe = /^\s*([0-9a-f]+):\s*(([0-9a-f][0-9a-f] ?)+)\s*(.*)/;
     lineRe = /^(\/[^:]+):([0-9]+).*/;
     labelRe = /^([0-9a-f]+)\s+<([^>]+)>:$/;
-    destRe = /.*\s([0-9a-f]+)\s+<([^>]+)>$/;
+    destRe = /.*\s([0-9a-f]+)\s+<([^>+]+)(\+0x[0-9a-f]+)?>$/;
     commentRe = /[#;]/;
 
     binaryHideFuncRe: RegExp | undefined;
@@ -260,15 +294,46 @@ export class AsmParser {
         return files;
     }
 
-    processAsm(asm: string, filter: AsmFilter): AsmLine[] {
+    // Remove labels which do not have a definition.
+    removeLabelsWithoutDefinition(astResult: AsmLine[], labelDefinitions: Map<string, number>) {
+        astResult.forEach(obj => {
+            obj.labels = obj.labels.filter(label => labelDefinitions.get(label.name));
+        });
+    }
+
+    // Get labels which are used in the given line.
+    getUsedLabelsInLine(line: string): AsmLabel[] {
+        const labelsInLine: AsmLabel[] = [];
+
+        // Strip any comments
+        const instruction = line.split(this.commentRe, 1)[0];
+
+        // Remove the instruction.
+        const params = instruction.replace(this.instructionRe, "");
+
+        const removedCol = instruction.length - params.length + 1;
+        params.replace(this.identifierFindRe, (label, index) => {
+            const startCol = removedCol + index;
+            labelsInLine.push(new AsmLabel(
+                label,
+                new AsmLabelRange(startCol, startCol + label.length)
+            ));
+            return "";
+        });
+
+        return labelsInLine;
+    }
+
+    processAsm(asmResult: string, filter: AsmFilter): AsmParserResult {
         if (filter.commentOnly) {
             // Remove any block comments that start and end on a line if we're removing comment-only lines.
             const blockComments = /^[ \t]*\/\*(\*(?!\/)|[^*])*\*\/\s*/mg;
-            asm = asm.replace(blockComments, "");
+            asmResult = asmResult.replace(blockComments, "");
         }
 
-        const result: AsmLine[] = [];
-        let asmLines = splitLines(asm);
+        const asm: AsmLine[] = [];
+        const labelDefinitions = new Map<string, number>();
+        let asmLines = splitLines(asmResult);
 
         const labelsUsed = this.findUsedLabels(asmLines, filter.directives);
         const files = this.parseFiles(asmLines);
@@ -289,9 +354,9 @@ export class AsmParser {
         let source: AsmSource | undefined;
 
         function maybeAddBlank() {
-            const lastBlank = result.length === 0 || result[result.length - 1].text === "";
+            const lastBlank = asm.length === 0 || asm[asm.length - 1].text === "";
             if (!lastBlank) {
-                result.push(new AsmLine("", undefined));
+                asm.push(new AsmLine("", undefined, []));
             }
         }
 
@@ -400,6 +465,7 @@ export class AsmParser {
                 } else {
                     // A used label.
                     prevLabel = match[0];
+                    labelDefinitions.set(match[1], asm.length + 1);
                 }
             }
             if (inNvccDef) {
@@ -419,12 +485,20 @@ export class AsmParser {
             }
 
             line = expandTabs(line);
-            result.push(new AsmLine(
-                this.filterAsmLine(line, filter),
-                this.hasOpcode(line, inNvccCode) ? source : undefined
+            const text = this.filterAsmLine(line, filter);
+
+            const labelsInLine: AsmLabel[] = match ? [] : this.getUsedLabelsInLine(text);
+
+            asm.push(new AsmLine(
+                text,
+                this.hasOpcode(line, inNvccCode) ? source : undefined,
+                labelsInLine
             ));
         });
-        return result;
+
+        this.removeLabelsWithoutDefinition(asm, labelDefinitions);
+
+        return new AsmParserResult(asm, labelDefinitions);
     }
 
     fixLabelIndentation(line: string) {
@@ -443,18 +517,25 @@ export class AsmParser {
         return !func.match(this.binaryHideFuncRe);
     }
 
-    processBinaryAsm(asm: string, filter: AsmFilter): AsmLine[] {
-        const result: AsmLine[] = [];
-        const asmLines = asm.split("\n");
+    processBinaryAsm(asmResult: string, filter: AsmFilter): AsmParserResult {
+        const asm: AsmLine[] = [];
+        const labelDefinitions = new Map<string, number>();
+
+        const asmLines = asmResult.split("\n");
         let source: AsmSource | undefined;
         let func: string | undefined;
 
         // Handle "error" documents.
         if (asmLines.length === 1 && asmLines[0][0] === '<') {
-            return [new AsmLine(asmLines[0], undefined)];
+            return new AsmParserResult(
+                [new AsmLine(asmLines[0], undefined, [])],
+                labelDefinitions
+            );
         }
 
         asmLines.forEach(line => {
+            const labelsInLine: AsmLabel[] = [];
+
             let match = line.match(this.lineRe);
             if (match) {
                 source = new AsmSource(match[1], parseInt(match[2]));
@@ -465,7 +546,8 @@ export class AsmParser {
             if (match) {
                 func = match[2];
                 if (this.isUserFunction(func)) {
-                    result.push(new AsmLine(func + ":", undefined));
+                    asm.push(new AsmLine(func + ":", undefined, labelsInLine));
+                    labelDefinitions.set(func, asm.length);
                 }
                 return;
             }
@@ -479,13 +561,16 @@ export class AsmParser {
                 const address = parseInt(match[1], 16);
                 const opcodes = match[2].split(" ").filter(x => !!x).join(' ');
                 const disassembly = " " + this.filterAsmLine(match[4], filter);
-                result.push(new BinaryAsmLine(disassembly, source, address, opcodes));
+                asm.push(new BinaryAsmLine(disassembly, source, labelsInLine, address, opcodes));
             }
         });
-        return result;
+
+        this.removeLabelsWithoutDefinition(asm, labelDefinitions);
+
+        return new AsmParserResult(asm, labelDefinitions);
     }
 
-    process(asm: string, filter: AsmFilter) {
+    process(asm: string, filter: AsmFilter): AsmParserResult {
         if (filter.binary) {
             return this.processBinaryAsm(asm, filter);
         } else {
