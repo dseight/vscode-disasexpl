@@ -130,6 +130,7 @@ export class AsmParser {
     labelRe = /^([\da-f]+)\s+<([^>]+)>:$/;
     destRe = /\s([\da-f]+)\s+<([^+>]+)(\+0x[\da-f]+)?>$/;
     commentRe = /[#;]/;
+    instOpcodeRe = /(\.inst\.?\w?)\s*(.*)/;
 
     binaryHideFuncRe: RegExp | undefined;
 
@@ -141,6 +142,10 @@ export class AsmParser {
         }
         // Strip any comments
         line = line.split(this.commentRe, 1)[0];
+        // .inst generates an opcode, so also counts
+        if (line.match(this.instOpcodeRe)) {
+            return true;
+        }
         // Detect assignment, that's not an opcode...
         if (line.match(this.assignmentDef)) {
             return false;
@@ -482,7 +487,7 @@ export class AsmParser {
                 if (line.match(this.dataDefn) && prevLabel) {
                     // We're defining data that's being used somewhere.
                 } else {
-                    if (line.match(this.directive)) {
+                    if (line.match(this.directive) && !line.match(this.instOpcodeRe)) {
                         return;
                     }
                 }
