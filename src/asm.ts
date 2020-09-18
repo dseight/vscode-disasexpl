@@ -113,7 +113,7 @@ export class AsmParser {
     identifierFindRe = /[.a-zA-Z_$@][a-zA-z0-9_]*/g;
     hasNvccOpcodeRe = /^\s*[a-zA-Z|@]/;
     definesFunction = /^\s*\.(type.*,\s*[@%#]function|proc\s+[.a-zA-Z_][a-zA-Z0-9$_.]*:.*)$/;
-    definesGlobal = /^\s*\.globa?l\s*([.a-zA-Z_][a-zA-Z0-9$_.]*)/;
+    definesGlobal = /^\s*\.(?:globa?l|GLB|export)\s*([.a-zA-Z_][a-zA-Z0-9$_.]*)/;
     indentedLabelDef = /^\s*([.a-zA-Z_$][a-zA-Z0-9$_.]*):/;
     assignmentDef = /^\s*([.a-zA-Z_$][a-zA-Z0-9$_.]+)\s*=/;
     directive = /^\s*\..*$/;
