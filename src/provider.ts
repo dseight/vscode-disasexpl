@@ -65,7 +65,7 @@ export function encodeAsmUri(uri: Uri): Uri {
     // by default just replace file extension with '.S'
     let defaultUri = uri.with({
         scheme: AsmProvider.scheme,
-        path: (uri.path.slice(0, uri.path.lastIndexOf('.')) || uri.path) + '.S'
+        path: pathWithoutExtension(uri.path) + '.S'
     });
 
     if (associations === undefined) {
@@ -89,6 +89,13 @@ export function encodeAsmUri(uri: Uri): Uri {
     }
 
     return defaultUri;
+}
+
+/**
+ * Remove extension from provided path.
+ */
+function pathWithoutExtension(path: string): string {
+    return path.slice(0, path.lastIndexOf('.')) || path;
 }
 
 // Resolve path with almost all variable substitution that supported in
