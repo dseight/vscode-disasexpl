@@ -1,12 +1,13 @@
 'use strict';
 
-import { workspace, Uri, EventEmitter } from 'vscode';
+import { workspace, Uri, EventEmitter, FileSystemWatcher } from 'vscode';
 import { AsmParser, AsmLine, AsmFilter } from './asm';
 
 export class AsmDocument {
 
     private _uri: Uri;
     private _emitter: EventEmitter<Uri>;
+    private _watcher: FileSystemWatcher;
     lines: AsmLine[] = [];
     sourceToAsmMapping = new Map<number, number[]>();
 
@@ -17,7 +18,17 @@ export class AsmDocument {
         // the containg provider. This allows it to signal changes
         this._emitter = emitter;
 
-        const useBinaryParsing = workspace.getConfiguration('', uri.with({scheme: 'file'}))
+        // Watch for underlying assembly file and reload it on change
+        this._watcher = workspace.createFileSystemWatcher(uri.path);
+        this._watcher.onDidChange(_ => this.update());
+        this._watcher.onDidCreate(_ => this.update());
+        this._watcher.onDidDelete(_ => this.update());
+
+        this.update();
+    }
+
+    update() {
+        const useBinaryParsing = workspace.getConfiguration('', this._uri.with({scheme: 'file'}))
             .get('disasexpl.useBinaryParsing', false);
 
         workspace.openTextDocument(this._uri.with({ scheme: 'file' })).then(doc => {
@@ -31,6 +42,10 @@ export class AsmDocument {
 
     get value(): string {
         return this.lines.reduce((result, line) => result += line.value, '');
+    }
+
+    dispose() {
+        this._watcher.dispose();
     }
 
 }

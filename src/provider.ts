@@ -1,6 +1,6 @@
 'use strict';
 
-import { workspace, languages, Uri, FileSystemWatcher, EventEmitter, TextDocumentContentProvider } from 'vscode';
+import { workspace, languages, Uri, EventEmitter, TextDocumentContentProvider } from 'vscode';
 import * as Path from 'path';
 import { AsmDocument } from './document';
 
@@ -9,39 +9,22 @@ export class AsmProvider implements TextDocumentContentProvider {
     static scheme = 'disassembly';
 
     private _documents = new Map<string, AsmDocument>();
-    private _watchers = new Map<string, FileSystemWatcher>();
     private _onDidChange = new EventEmitter<Uri>();
 
     provideTextDocumentContent(uri: Uri): string | Thenable<string> {
-        let document = this.provideAsmDocument(uri);
+        const document = this.provideAsmDocument(uri);
         return document.value;
     }
 
     provideAsmDocument(uri: Uri): AsmDocument {
-        // already loaded?
-        let document = this._documents.get(uri.toString());
-        if (document) {
-            return document;
+        let document = this._documents.get(uri.path);
+
+        if (!document) {
+            document = new AsmDocument(uri, this._onDidChange);
+            this._documents.set(uri.path, document);
         }
 
-        document = new AsmDocument(uri, this._onDidChange);
-        this._documents.set(uri.toString(), document);
-
-        // Watch for assembly file and reload it on change
-        let watcher = workspace.createFileSystemWatcher(uri.path);
-        watcher.onDidChange(fileUri => this.reloadAsmDocument(fileUri));
-        watcher.onDidCreate(fileUri => this.reloadAsmDocument(fileUri));
-        watcher.onDidDelete(fileUri => this.reloadAsmDocument(fileUri));
-        this._watchers.set(uri.toString(), watcher);
-
         return document;
-    }
-
-    reloadAsmDocument(fileUri: Uri) {
-        const uri = fileUri.with({ scheme: AsmProvider.scheme });
-        const document = new AsmDocument(uri, this._onDidChange);
-        this._documents.set(uri.toString(), document);
-        this._onDidChange.fire(uri);
     }
 
     // Expose an event to signal changes of _virtual_ documents
@@ -51,7 +34,6 @@ export class AsmProvider implements TextDocumentContentProvider {
     }
 
     dispose() {
-        this._watchers.forEach(watcher => watcher.dispose());
         this._documents.clear();
         this._onDidChange.dispose();
     }
