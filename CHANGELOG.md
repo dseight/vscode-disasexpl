@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.2.0 - 2020-09-21
+### Fixed
+- Fix disappearing assembly output on project rebuild.
+
+### Added
+- Add extension icon.
+
+### Changed
+- Adapt newest changes from Compiler Explorer assembly parser.
+
 ## 0.0.5 - 2019-05-30
 ### Added
 - New `${relativeFileDir}` option in settings variables.

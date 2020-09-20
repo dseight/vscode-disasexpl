@@ -3,7 +3,7 @@
     "displayName": "Disassembly Explorer",
     "description": "Show disassembly to source relations",
     "icon": "icon.png",
-    "version": "0.0.5",
+    "version": "0.2.0",
     "publisher": "dseight",
     "license": "SEE LICENSE IN LICENSE",
     "repository": {
