@@ -20,11 +20,16 @@ export class AsmDocument {
 
         // Watch for underlying assembly file and reload it on change
         this._watcher = workspace.createFileSystemWatcher(uri.path);
-        this._watcher.onDidChange(_ => this.update());
-        this._watcher.onDidCreate(_ => this.update());
-        this._watcher.onDidDelete(_ => this.update());
+        this._watcher.onDidChange(_ => this.updateLater());
+        this._watcher.onDidCreate(_ => this.updateLater());
+        this._watcher.onDidDelete(_ => this.updateLater());
 
         this.update();
+    }
+
+    updateLater() {
+        // Workarond for https://github.com/Microsoft/vscode/issues/72831
+        setTimeout(_ => this.update(), 100);
     }
 
     update() {
