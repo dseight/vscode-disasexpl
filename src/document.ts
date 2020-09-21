@@ -20,19 +20,19 @@ export class AsmDocument {
 
         // Watch for underlying assembly file and reload it on change
         this._watcher = workspace.createFileSystemWatcher(uri.path);
-        this._watcher.onDidChange(_ => this.updateLater());
-        this._watcher.onDidCreate(_ => this.updateLater());
-        this._watcher.onDidDelete(_ => this.updateLater());
+        this._watcher.onDidChange(() => this.updateLater());
+        this._watcher.onDidCreate(() => this.updateLater());
+        this._watcher.onDidDelete(() => this.updateLater());
 
         this.update();
     }
 
-    updateLater() {
+    private updateLater() {
         // Workarond for https://github.com/Microsoft/vscode/issues/72831
-        setTimeout(_ => this.update(), 100);
+        setTimeout(() => this.update(), 100);
     }
 
-    update() {
+    private update() {
         const useBinaryParsing = workspace.getConfiguration('', this._uri.with({scheme: 'file'}))
             .get('disasexpl.useBinaryParsing', false);
 
@@ -40,16 +40,16 @@ export class AsmDocument {
             const filter = new AsmFilter();
             filter.binary = useBinaryParsing;
             this.lines = new AsmParser().process(doc.getText(), filter).asm;
-        }, _err => {
+        }, () => {
             this.lines = [new AsmLine(`Failed to load file '${this._uri.path}'`, undefined, [])];
-        }).then(_ => this._emitter.fire(this._uri));
+        }).then(() => this._emitter.fire(this._uri));
     }
 
     get value(): string {
         return this.lines.reduce((result, line) => result += line.value, '');
     }
 
-    dispose() {
+    dispose(): void {
         this._watcher.dispose();
     }
 

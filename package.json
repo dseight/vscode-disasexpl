@@ -64,11 +64,12 @@
         "watch": "tsc -watch -p ./"
     },
     "devDependencies": {
-        "@types/mocha": "^2.2.42",
         "@types/node": "^7.10.13",
-        "@types/underscore": "^1.10.23",
-        "tslint": "^5.20.1",
-        "typescript": "^3.5.1",
-        "@types/vscode": "^1.23.0"
+        "@types/vscode": "^1.23.0",
+        "@typescript-eslint/eslint-plugin": "^4.2.0",
+        "@typescript-eslint/parser": "^4.2.0",
+        "eslint": "^7.9.0",
+        "eslint-plugin-import": "^2.22.0",
+        "typescript": "^3.5.1"
     }
 }

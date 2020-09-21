@@ -1,6 +1,6 @@
 'use strict';
 
-import { workspace, languages, Uri, EventEmitter, TextDocumentContentProvider } from 'vscode';
+import { workspace, languages, Uri, EventEmitter, TextDocumentContentProvider, Event } from 'vscode';
 import * as Path from 'path';
 import { AsmDocument } from './document';
 
@@ -29,11 +29,11 @@ export class AsmProvider implements TextDocumentContentProvider {
 
     // Expose an event to signal changes of _virtual_ documents
     // to the editor
-    get onDidChange() {
+    get onDidChange(): Event<Uri> {
         return this._onDidChange.event;
     }
 
-    dispose() {
+    dispose(): void {
         this._documents.clear();
         this._onDidChange.dispose();
     }
@@ -42,10 +42,12 @@ export class AsmProvider implements TextDocumentContentProvider {
 
 export function encodeAsmUri(uri: Uri): Uri {
     const configuration = workspace.getConfiguration('', uri);
-    const associations: any = configuration.get('disasexpl.associations');
+
+    type Associations = Record<string, string>;
+    const associations = configuration.get<Associations>('disasexpl.associations');
 
     // by default just replace file extension with '.S'
-    let defaultUri = uri.with({
+    const defaultUri = uri.with({
         scheme: AsmProvider.scheme,
         path: pathWithoutExtension(uri.path) + '.S'
     });
@@ -54,15 +56,15 @@ export function encodeAsmUri(uri: Uri): Uri {
         return defaultUri;
     }
 
-    for (let key in associations) {
+    for (const key in associations) {
         // that's a nasty way to get the doc...
-        let doc = workspace.textDocuments.find(doc => doc.uri === uri);
+        const doc = workspace.textDocuments.find(doc => doc.uri === uri);
         if (doc === undefined) {
             continue;
         }
-        let match = languages.match({ pattern: key }, doc);
+        const match = languages.match({ pattern: key }, doc);
         if (match > 0) {
-            let associated = associations[key];
+            const associated = associations[key];
             return uri.with({
                 scheme: AsmProvider.scheme,
                 path: resolvePath(uri.fsPath, associated)
@@ -87,10 +89,10 @@ function resolvePath(path: string, associated: string): string {
         return path;
     }
 
-    let parsedFilePath = Path.parse(path);
-    let workspacePath = workspace.workspaceFolders[0].uri.fsPath;
+    const parsedFilePath = Path.parse(path);
+    const workspacePath = workspace.workspaceFolders[0].uri.fsPath;
 
-    let variables: any = {
+    const variables: Record<string, string> = {
         // the path of the folder opened in VS Code
         'workspaceFolder': workspacePath,
         // the name of the folder opened in VS Code without any slashes (/)

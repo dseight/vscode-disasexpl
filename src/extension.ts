@@ -4,7 +4,7 @@ import { workspace, window, commands, ExtensionContext } from 'vscode';
 import { AsmProvider, encodeAsmUri } from './provider';
 import { AsmDecorator } from './decorator';
 
-export function activate(context: ExtensionContext) {
+export function activate(context: ExtensionContext): void {
     const provider = new AsmProvider();
 
     // register content provider for scheme `disassembly`
@@ -24,7 +24,7 @@ export function activate(context: ExtensionContext) {
         window.showTextDocument(asmUri, options).then(asmEditor => {
             const decorator = new AsmDecorator(srcEditor, asmEditor, provider);
             // dirty way to get decorations work after showing disassembly
-            setTimeout(_ => decorator.updateSelection(srcEditor), 500);
+            setTimeout(() => decorator.updateSelection(srcEditor), 500);
         });
     });
 

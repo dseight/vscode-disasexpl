@@ -28,11 +28,11 @@
 import { splitLines, expandTabs, squashHorizontalWhitespace } from './utils';
 
 export class AsmFilter {
-    trim: boolean = true;
-    binary: boolean = false;
-    commentOnly: boolean = false;
-    directives: boolean = true;
-    labels: boolean = true;
+    trim = true;
+    binary = false;
+    commentOnly = false;
+    directives = true;
+    labels = true;
 }
 
 export class AsmSource {
@@ -143,7 +143,7 @@ export class AsmParser {
 
     binaryHideFuncRe: RegExp | undefined;
 
-    hasOpcode(line: string, inNvccCode: boolean) {
+    private hasOpcode(line: string, inNvccCode: boolean) {
         // Remove any leading label definition...
         const match = line.match(this.labelDef);
         if (match) {
@@ -165,21 +165,21 @@ export class AsmParser {
         return !!line.match(this.hasOpcodeRe);
     }
 
-    filterAsmLine(line: string, filter: AsmFilter) {
+    private filterAsmLine(line: string, filter: AsmFilter) {
         if (!filter.trim) {
             return line;
         }
         return squashHorizontalWhitespace(line, true);
     }
 
-    labelFindFor(asmLines: string[]) {
-        let isMips = asmLines.some(line => {
+    private labelFindFor(asmLines: string[]) {
+        const isMips = asmLines.some(line => {
             return !!line.match(this.mipsLabelDefinition);
         });
         return isMips ? this.labelFindMips : this.labelFindNonMips;
     }
 
-    findUsedLabels(asmLines: string[], filterDirectives: boolean): Set<string> {
+    private findUsedLabels(asmLines: string[], filterDirectives: boolean) {
         const labelsUsed = new Set<string>();
         const weakUsages = new Map<string, string[]>();
         const labelFind = this.labelFindFor(asmLines);
@@ -268,10 +268,10 @@ export class AsmParser {
         // or we hit a limit (only here to prevent a pathological case from hanging).
         const MaxLabelIterations = 10;
         for (let iter = 0; iter < MaxLabelIterations; ++iter) {
-            let toAdd: string[] = [];
+            const toAdd: string[] = [];
 
             labelsUsed.forEach(label => {
-                let labelWeakUsages = weakUsages.get(label);
+                const labelWeakUsages = weakUsages.get(label);
                 if (labelWeakUsages === undefined) {
                     return;
                 }
@@ -293,7 +293,7 @@ export class AsmParser {
         return labelsUsed;
     }
 
-    parseFiles(asmLines: string[]): Map<number, string> {
+    private parseFiles(asmLines: string[]) {
         const files = new Map<number, string>();
 
         asmLines.forEach(line => {
@@ -313,14 +313,14 @@ export class AsmParser {
     }
 
     // Remove labels which do not have a definition.
-    removeLabelsWithoutDefinition(astResult: AsmLine[], labelDefinitions: Map<string, number>) {
+    private removeLabelsWithoutDefinition(astResult: AsmLine[], labelDefinitions: Map<string, number>) {
         astResult.forEach(obj => {
             obj.labels = obj.labels.filter(label => labelDefinitions.get(label.name));
         });
     }
 
     // Get labels which are used in the given line.
-    getUsedLabelsInLine(line: string): AsmLabel[] {
+    private getUsedLabelsInLine(line: string) {
         const labelsInLine: AsmLabel[] = [];
 
         // Strip any comments
@@ -342,7 +342,7 @@ export class AsmParser {
         return labelsInLine;
     }
 
-    processAsm(asmResult: string, filter: AsmFilter): AsmParserResult {
+    private processAsm(asmResult: string, filter: AsmFilter) {
         if (filter.commentOnly) {
             // Remove any block comments that start and end on a line if we're removing comment-only lines.
             const blockComments = /^[\t ]*\/\*(\*(?!\/)|[^*])*\*\/\s*/gm;
@@ -351,7 +351,7 @@ export class AsmParser {
 
         const asm: AsmLine[] = [];
         const labelDefinitions = new Map<string, number>();
-        let asmLines = splitLines(asmResult);
+        const asmLines = splitLines(asmResult);
 
         const labelsUsed = this.findUsedLabels(asmLines, filter.directives);
         const files = this.parseFiles(asmLines);
@@ -519,7 +519,7 @@ export class AsmParser {
         return new AsmParserResult(asm, labelDefinitions);
     }
 
-    fixLabelIndentation(line: string) {
+    private fixLabelIndentation(line: string) {
         const match = line.match(this.indentedLabelDef);
         if (match) {
             return line.replace(/^\s+/, '');
@@ -528,14 +528,14 @@ export class AsmParser {
         }
     }
 
-    isUserFunction(func: string) {
+    private isUserFunction(func: string) {
         if (this.binaryHideFuncRe === undefined) {
             return true;
         }
         return !func.match(this.binaryHideFuncRe);
     }
 
-    processBinaryAsm(asmResult: string, filter: AsmFilter): AsmParserResult {
+    private processBinaryAsm(asmResult: string, filter: AsmFilter) {
         const asm: AsmLine[] = [];
         const labelDefinitions = new Map<string, number>();
 

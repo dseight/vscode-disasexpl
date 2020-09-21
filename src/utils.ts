@@ -26,7 +26,7 @@ const tabsRe = /\t/g;
 const lineRe = /\r?\n/;
 const findQuotes = /(.*?)("(?:[^"\\]|\\.)*")(.*)/;
 
-export function splitLines(text: string) {
+export function splitLines(text: string): string[] {
     const result = text.split(lineRe);
     if (result.length > 0 && result[result.length - 1] === '') {
         return result.slice(0, result.length - 1);
@@ -34,7 +34,7 @@ export function splitLines(text: string) {
     return result;
 }
 
-export function expandTabs(line: string) {
+export function expandTabs(line: string): string {
     let extraChars = 0;
     return line.replace(tabsRe, function (_match, offset) {
         const total = offset + extraChars;

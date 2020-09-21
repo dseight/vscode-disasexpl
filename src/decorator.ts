@@ -58,11 +58,11 @@ export class AsmDecorator {
         );
     }
 
-    dispose() {
+    dispose(): void {
         this.registrations.dispose();
     }
 
-    load(uri: Uri) {
+    private load(uri: Uri) {
         this.document = this.provider.provideAsmDocument(uri);
         this.loadMappings();
 
@@ -74,7 +74,7 @@ export class AsmDecorator {
         }
     }
 
-    asmLineHasSource(asmLine: AsmLine): boolean {
+    private asmLineHasSource(asmLine: AsmLine) {
         const sourceName = this.srcEditor.document.uri.path;
 
         if (asmLine.source === undefined) {
@@ -90,14 +90,14 @@ export class AsmDecorator {
         return true;
     }
 
-    loadMappings() {
+    private loadMappings() {
         this.mappings.clear();
 
         this.document.lines.forEach((line, index) => {
             if (!this.asmLineHasSource(line)) {
                 return;
             }
-            let sourceLine = line.source!.line - 1;
+            const sourceLine = line.source!.line - 1;
             if (this.mappings.get(sourceLine) === undefined) {
                 this.mappings.set(sourceLine, []);
             }
@@ -105,7 +105,7 @@ export class AsmDecorator {
         });
     }
 
-    updateSelection(editor: TextEditor) {
+    updateSelection(editor: TextEditor): void {
         if (editor === this.srcEditor) {
             this.srcLineSelected(this.srcEditor.selection.start.line);
         } else if (editor === this.asmEditor) {
@@ -128,7 +128,7 @@ export class AsmDecorator {
         this.srcEditor.setDecorations(this.selectedLineDecorationType, [srcLineRange]);
 
         const asmLinesRanges: Range[] = [];
-        let mapped = this.mappings.get(line);
+        const mapped = this.mappings.get(line);
         if (mapped !== undefined) {
             mapped.forEach(line => {
                 if (line >= this.asmEditor.document.lineCount) {
@@ -145,7 +145,7 @@ export class AsmDecorator {
     }
 
     private asmLineSelected(line: number) {
-        let asmLine = this.document.lines[line];
+        const asmLine = this.document.lines[line];
 
         const asmLineRange = this.asmEditor.document.lineAt(line).range;
         this.asmEditor.setDecorations(this.selectedLineDecorationType, [asmLineRange]);
