@@ -1,4 +1,4 @@
-# Disassembly Explorer
+**Disassembly Explorer**
 
 Shows disassembly to source relations and dims unused source lines.
 
@@ -6,7 +6,7 @@ This extension is based on [Compiler Explorer](https://github.com/mattgodbolt/co
 
 ![Disassembly Explorer Preview](preview.gif)
 
-## Usage
+**Usage**
 
 First you need disassembly of your source files. That's because the extension does not know anything about your project structure, compiler and compilation flags.
 
@@ -34,7 +34,7 @@ Make sure to adjust the disassembly extension to `.s` when using the "-save-temp
 
 Now, when all is done, simply select `F1 > Disassembly Explorer: Show`. Disassembly will be opened on the right side of your source.
 
-## TODO
+**TODO**
 
 - [ ] Provide links for lines like `ja 24a7 <rasterize+0x7d7>`
 - [ ] Colorize source and asm lines as in Compiler Explorer
