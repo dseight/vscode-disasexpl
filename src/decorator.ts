@@ -83,7 +83,8 @@ export class AsmDecorator {
 
         // assembly may contain lines from different source files,
         // thus we should check that line comes from current opened file
-        if (asmLine.source.file === undefined || !sourceName.endsWith(asmLine.source.file)) {
+        var path = require("path");
+        if (asmLine.source.file === undefined || !sourceName.endsWith(path.basename(asmLine.source.file))) {
             return false;
         }
 
