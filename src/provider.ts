@@ -111,7 +111,7 @@ function resolvePath(path: string, associated: string): string {
         'fileExtname': parsedFilePath.ext,
         // the relative directory, so one can use it in settings as:
         // "**/*.c": "${workspaceFolder}/.o/${relativeFileDir}/${fileBasenameNoExtension}.s"
-        'relativeFileDir': Path.relative(workspacePath, parsedFilePath.dir),
+        'relativeFileDirname': Path.relative(workspacePath, parsedFilePath.dir),
     };
 
     const variablesRe = /\$\{(.*?)\}/g;
