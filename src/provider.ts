@@ -95,8 +95,12 @@ function resolvePath(path: string, association_rule: string): string {
         'workspaceFolderBasename': Path.parse(workspacePath).name,
         // the current opened file
         'file': path,
+        // the current opened file's workspace folder
+        'fileWorkspaceFolder': workspace.getWorkspaceFolder(Uri.file(path))?.uri.fsPath || '',
         // the current opened file relative to workspaceFolder
         'relativeFile': Path.relative(workspacePath, path),
+        // the current opened file's dirname relative to workspaceFolder
+        'relativeFileDirname': Path.relative(workspacePath, parsedFilePath.dir),
         // the current opened file's basename
         'fileBasename': parsedFilePath.base,
         // the current opened file's basename with no file extension
@@ -105,8 +109,10 @@ function resolvePath(path: string, association_rule: string): string {
         'fileDirname': parsedFilePath.dir,
         // the current opened file's extension
         'fileExtname': parsedFilePath.ext,
-        // the relative directory, so one can use it in settings as:
-        // "**/*.c": "${workspaceFolder}/.o/${relativeFileDir}/${fileBasenameNoExtension}.s"
+        // the character used by the operating system to separate components in file paths
+        'pathSeparator': Path.sep,
+        // same as relativeFileDirname, kept for compatibility with old configs
+        // TODO: remove in future releases
         'relativeFileDir': Path.relative(workspacePath, parsedFilePath.dir),
     };
 
