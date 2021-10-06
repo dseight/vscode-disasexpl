@@ -41,16 +41,16 @@ export class AsmProvider implements TextDocumentContentProvider {
 }
 
 export function getAsmUri(source: TextDocument): Uri {
-    const source_uri = source.uri;
-    const configuration = workspace.getConfiguration('', source_uri);
+    const sourceUri = source.uri;
+    const configuration = workspace.getConfiguration('', sourceUri);
 
     type Associations = Record<string, string>;
     const associations = configuration.get<Associations>('disasexpl.associations');
 
     // by default just replace file extension with '.S'
-    const defaultUri = source_uri.with({
+    const defaultUri = sourceUri.with({
         scheme: AsmProvider.scheme,
-        path: pathWithoutExtension(source_uri.path) + '.S'
+        path: pathWithoutExtension(sourceUri.path) + '.S'
     });
 
     if (associations === undefined) {
@@ -60,10 +60,10 @@ export function getAsmUri(source: TextDocument): Uri {
     for (const key in associations) {
         const match = languages.match({ pattern: key }, source);
         if (match > 0) {
-            const association_rule = associations[key];
-            return source_uri.with({
+            const associationRule = associations[key];
+            return sourceUri.with({
                 scheme: AsmProvider.scheme,
-                path: resolvePath(source_uri.fsPath, association_rule)
+                path: resolvePath(sourceUri.fsPath, associationRule)
             });
         }
     }
@@ -80,7 +80,7 @@ function pathWithoutExtension(path: string): string {
 
 // Resolve path with almost all variable substitution that supported in
 // Debugging and Task configuration files
-function resolvePath(path: string, association_rule: string): string {
+function resolvePath(path: string, associationRule: string): string {
     if (workspace.workspaceFolders === undefined) {
         return path;
     }
@@ -117,8 +117,8 @@ function resolvePath(path: string, association_rule: string): string {
     };
 
     const variablesRe = /\$\{(.*?)\}/g;
-    const resolvedPath = association_rule.replace(variablesRe, (match: string, var_name: string) => {
-        const value = variables[var_name];
+    const resolvedPath = associationRule.replace(variablesRe, (match: string, varName: string) => {
+        const value = variables[varName];
         if (value !== undefined) {
             return value;
         } else {
