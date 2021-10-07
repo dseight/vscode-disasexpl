@@ -123,7 +123,7 @@ export class AsmParser {
     hasNvccOpcodeRe = /^\s*[@A-Za-z|]/;
     definesFunction = /^\s*\.(type.*,\s*[#%@]function|proc\s+[.A-Z_a-z][\w$.]*:.*)$/;
     definesGlobal = /^\s*\.(?:globa?l|GLB|export)\s*([.A-Z_a-z][\w$.]*)/;
-    definesWeak = /^\s*\.(?:weak|weakext)\s*([.A-Z_a-z][\w$.]*)/;
+    definesWeak = /^\s*\.(?:weakext|weak)\s*([.A-Z_a-z][\w$.]*)/;
     indentedLabelDef = /^\s*([$.A-Z_a-z][\w$.]*):/;
     assignmentDef = /^\s*([$.A-Z_a-z][\w$.]+)\s*=/;
     directive = /^\s*\..*$/;
