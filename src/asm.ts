@@ -364,6 +364,7 @@ export class AsmParser {
 
         const commentOnlyNvcc = /^\s*(((#|;|\/\/).*)|(\/\*.*\*\/))$/;
         const sourceTag = /^\s*\.loc\s+(\d+)\s+(\d+).*/;
+        const sourceD2Tag = /^\s*\.d2line\s+(\d+),?\s*(\d*).*/;
         const source6502Dbg = /^\s*\.dbg\s+line,\s*"([^"]+)",\s*(\d+)/;
         const source6502DbgEnd = /^\s*\.dbg\s+line[^,]/;
         const sourceStab = /^\s*\.stabn\s+(\d+),0,(\d+),.*/;
@@ -379,7 +380,7 @@ export class AsmParser {
         }
 
         function handleSource(line: string) {
-            const match = line.match(sourceTag);
+            let match = line.match(sourceTag);
             if (match) {
                 const file = files.get(parseInt(match[1]));
                 const sourceLine = parseInt(match[2]);
@@ -390,6 +391,15 @@ export class AsmParser {
                     );
                 } else {
                     source = undefined;
+                }
+            } else {
+                match = line.match(sourceD2Tag);
+                if (match) {
+                    const sourceLine = parseInt(match[1]);
+                    source = new AsmSource(
+                        undefined,
+                        sourceLine,
+                    );
                 }
             }
         }
