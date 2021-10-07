@@ -203,7 +203,7 @@ export class AsmParser {
         //       mov eax, .baz
         // In this case, the '.baz' is used by an opcode, and so is strongly used.
         // The '.foo' is weakly used by .baz.
-        asmLines.forEach(line => {
+        for (let line of asmLines) {
             if (this.startAppBlock.test(line) || this.startAsmNesting.test(line)) {
                 inCustomAssembly++;
             } else if (this.endAppBlock.test(line) || this.endAsmNesting.test(line)) {
@@ -239,32 +239,34 @@ export class AsmParser {
 
             const definesFunction = line.match(this.definesFunction);
             if (!definesFunction && (!line || line[0] === '.')) {
-                return;
+                continue;
             }
 
             match = line.match(labelFind);
             if (!match) {
-                return;
+                continue;
             }
 
             if (!filterDirectives || this.hasOpcode(line, false) || definesFunction) {
                 // Only count a label as used if it's used by an opcode, or else we're not filtering directives.
-                match.forEach(label => labelsUsed.add(label));
+                for (const label of match)
+                    labelsUsed.add(label);
             } else {
                 // If we have a current label, then any subsequent opcode or data definition's labels are referred to
                 // weakly by that label.
                 const isDataDefinition = !!this.dataDefn.test(line);
                 const isOpcode = this.hasOpcode(line, false);
                 if (isDataDefinition || isOpcode) {
-                    currentLabelSet.forEach(currentLabel => {
+                    for (const currentLabel of currentLabelSet) {
                         if (weakUsages.get(currentLabel) === undefined) {
                             weakUsages.set(currentLabel, []);
                         }
-                        match!.forEach(label => weakUsages.get(currentLabel)!.push(label));
-                    });
+                        for (const label of match)
+                            weakUsages.get(currentLabel)!.push(label);
+                    }
                 }
             }
-        });
+        }
 
         // Now follow the chains of used labels, marking any weak references they refer
         // to as also used. We iteratively do this until either no new labels are found,
@@ -299,7 +301,7 @@ export class AsmParser {
     private parseFiles(asmLines: string[]) {
         const files = new Map<number, string>();
 
-        asmLines.forEach(line => {
+        for (const line of asmLines) {
             const match = line.match(this.fileFind);
             if (match) {
                 const lineNum = parseInt(match[1]);
@@ -310,7 +312,7 @@ export class AsmParser {
                     files.set(lineNum, match[2]);
                 }
             }
-        });
+        }
 
         return files;
     }
@@ -447,9 +449,10 @@ export class AsmParser {
         let inNvccCode = false;
 
         let inCustomAssembly = 0;
-        asmLines.forEach(line => {
+        for (let line of asmLines) {
             if (line.trim() === '') {
-                return maybeAddBlank();
+                maybeAddBlank();
+                continue;
             }
 
             if (this.startAppBlock.test(line) || this.startAsmNesting.test(line)) {
@@ -471,7 +474,7 @@ export class AsmParser {
                 ((commentOnly.test(line) && !inNvccCode) ||
                     (commentOnlyNvcc.test(line) && inNvccCode))
             ) {
-                return;
+                continue;
             }
 
             if (inCustomAssembly > 0) {
@@ -495,7 +498,7 @@ export class AsmParser {
                 if (!labelsUsed.has(match[1])) {
                     // It's an unused label.
                     if (filter.labels) {
-                        return;
+                        continue;
                     }
                 } else {
                     // A used label.
@@ -514,7 +517,7 @@ export class AsmParser {
                     // We're defining data that's being used somewhere.
                 } else {
                     if (this.directive.test(line) && !this.instOpcodeRe.test(line)) {
-                        return;
+                        continue;
                     }
                 }
             }
@@ -529,7 +532,7 @@ export class AsmParser {
                 this.hasOpcode(line, inNvccCode) ? source : undefined,
                 labelsInLine
             ));
-        });
+        }
 
         this.removeLabelsWithoutDefinition(asm, labelDefinitions);
 
@@ -568,13 +571,13 @@ export class AsmParser {
             );
         }
 
-        asmLines.forEach(line => {
+        for (const line of asmLines) {
             const labelsInLine: AsmLabel[] = [];
 
             let match = line.match(this.lineRe);
             if (match) {
                 source = new AsmSource(match[1], parseInt(match[2]));
-                return;
+                continue;
             }
 
             match = line.match(this.labelRe);
@@ -584,11 +587,11 @@ export class AsmParser {
                     asm.push(new AsmLine(func + ':', undefined, labelsInLine));
                     labelDefinitions.set(func, asm.length);
                 }
-                return;
+                continue;
             }
 
             if (!func || !this.isUserFunction(func)) {
-                return;
+                continue;
             }
 
             match = line.match(this.asmOpcodeRe);
@@ -598,7 +601,7 @@ export class AsmParser {
                 const disassembly = " " + this.filterAsmLine(match[4], filter);
                 asm.push(new BinaryAsmLine(disassembly, source, labelsInLine, address, opcodes));
             }
-        });
+        }
 
         this.removeLabelsWithoutDefinition(asm, labelDefinitions);
 
