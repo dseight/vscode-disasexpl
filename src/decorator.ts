@@ -4,6 +4,7 @@ import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor, worksp
 import { AsmProvider } from './provider';
 import { AsmDocument } from './document';
 import { AsmLine } from './asm';
+import * as path from 'path';
 
 export class AsmDecorator {
 
@@ -75,15 +76,18 @@ export class AsmDecorator {
     }
 
     private asmLineHasSource(asmLine: AsmLine) {
-        const sourceName = this.srcEditor.document.uri.path;
+        const sourcePath = this.srcEditor.document.uri.path;
+        const asmLineSourcePath = asmLine.source?.file;
 
-        if (asmLine.source === undefined) {
+        if (asmLineSourcePath === undefined) {
             return false;
         }
 
+        const asmLineSourceBasename = path.basename(asmLineSourcePath);
+
         // assembly may contain lines from different source files,
         // thus we should check that line comes from current opened file
-        if (asmLine.source.file === undefined || !sourceName.endsWith(asmLine.source.file)) {
+        if (!sourcePath.endsWith(asmLineSourceBasename)) {
             return false;
         }
 
