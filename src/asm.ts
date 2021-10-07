@@ -155,17 +155,17 @@ export class AsmParser {
         // Strip any comments
         line = line.split(this.commentRe, 1)[0];
         // .inst generates an opcode, so also counts
-        if (line.match(this.instOpcodeRe)) {
+        if (this.instOpcodeRe.test(line)) {
             return true;
         }
         // Detect assignment, that's not an opcode...
-        if (line.match(this.assignmentDef)) {
+        if (this.assignmentDef.test(line)) {
             return false;
         }
         if (inNvccCode) {
-            return !!line.match(this.hasNvccOpcodeRe);
+            return !!this.hasNvccOpcodeRe.test(line);
         }
-        return !!line.match(this.hasOpcodeRe);
+        return !!this.hasOpcodeRe.test(line);
     }
 
     private filterAsmLine(line: string, filter: AsmFilter) {
@@ -177,7 +177,7 @@ export class AsmParser {
 
     private labelFindFor(asmLines: string[]) {
         const isMips = asmLines.some(line => {
-            return !!line.match(this.mipsLabelDefinition);
+            return !!this.mipsLabelDefinition.test(line);
         });
         return isMips ? this.labelFindMips : this.labelFindNonMips;
     }
@@ -204,9 +204,9 @@ export class AsmParser {
         // In this case, the '.baz' is used by an opcode, and so is strongly used.
         // The '.foo' is weakly used by .baz.
         asmLines.forEach(line => {
-            if (line.match(this.startAppBlock) || line.match(this.startAsmNesting)) {
+            if (this.startAppBlock.test(line) || this.startAsmNesting.test(line)) {
                 inCustomAssembly++;
-            } else if (line.match(this.endAppBlock) || line.match(this.endAsmNesting)) {
+            } else if (this.endAppBlock.test(line) || this.endAsmNesting.test(line)) {
                 inCustomAssembly--;
             }
 
@@ -253,7 +253,7 @@ export class AsmParser {
             } else {
                 // If we have a current label, then any subsequent opcode or data definition's labels are referred to
                 // weakly by that label.
-                const isDataDefinition = !!line.match(this.dataDefn);
+                const isDataDefinition = !!this.dataDefn.test(line);
                 const isOpcode = this.hasOpcode(line, false);
                 if (isDataDefinition || isOpcode) {
                     currentLabelSet.forEach(currentLabel => {
@@ -389,7 +389,7 @@ export class AsmParser {
                 const sourceLine = parseInt(match[2]);
                 if (file) {
                     source = new AsmSource(
-                        !file.match(stdInLooking) ? file : undefined,
+                        !stdInLooking.test(file) ? file : undefined,
                         sourceLine
                     );
                     const sourceCol = parseInt(match[3]);
@@ -435,10 +435,10 @@ export class AsmParser {
                 const file = match[1];
                 const sourceLine = parseInt(match[2]);
                 source = new AsmSource(
-                    !file.match(stdInLooking) ? file : undefined,
+                    !stdInLooking.test(file) ? file : undefined,
                     sourceLine
                 );
-            } else if (line.match(source6502DbgEnd)) {
+            } else if (source6502DbgEnd.test(line)) {
                 source = undefined;
             }
         }
@@ -452,9 +452,9 @@ export class AsmParser {
                 return maybeAddBlank();
             }
 
-            if (line.match(this.startAppBlock) || line.match(this.startAsmNesting)) {
+            if (this.startAppBlock.test(line) || this.startAsmNesting.test(line)) {
                 inCustomAssembly++;
-            } else if (line.match(this.endAppBlock) || line.match(this.endAsmNesting)) {
+            } else if (this.endAppBlock.test(line) || this.endAsmNesting.test(line)) {
                 inCustomAssembly--;
             }
 
@@ -462,14 +462,14 @@ export class AsmParser {
             handleStabs(line);
             handle6502(line);
 
-            if (line.match(endBlock) || (inNvccCode && line.match(/}/))) {
+            if (endBlock.test(line) || (inNvccCode && /}/.test(line))) {
                 source = undefined;
                 prevLabel = undefined;
             }
 
             if (filter.commentOnly &&
-                ((line.match(commentOnly) && !inNvccCode) ||
-                    (line.match(commentOnlyNvcc) && inNvccCode))
+                ((commentOnly.test(line) && !inNvccCode) ||
+                    (commentOnlyNvcc.test(line) && inNvccCode))
             ) {
                 return;
             }
@@ -504,16 +504,16 @@ export class AsmParser {
                 }
             }
             if (inNvccDef) {
-                if (line.match(this.cudaEndDef)) {
+                if (this.cudaEndDef.test(line)) {
                     inNvccDef = false;
                 }
             } else if (!match && filter.directives) {
                 // Check for directives only if it wasn't a label; the regexp would
                 // otherwise misinterpret labels as directives.
-                if (line.match(this.dataDefn) && prevLabel) {
+                if (this.dataDefn.test(line) && prevLabel) {
                     // We're defining data that's being used somewhere.
                 } else {
-                    if (line.match(this.directive) && !line.match(this.instOpcodeRe)) {
+                    if (this.directive.test(line) && !this.instOpcodeRe.test(line)) {
                         return;
                     }
                 }
@@ -549,7 +549,7 @@ export class AsmParser {
         if (this.binaryHideFuncRe === undefined) {
             return true;
         }
-        return !func.match(this.binaryHideFuncRe);
+        return !this.binaryHideFuncRe.test(func);
     }
 
     private processBinaryAsm(asmResult: string, filter: AsmFilter) {
