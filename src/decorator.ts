@@ -1,9 +1,9 @@
 'use strict';
 
-import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor, workspace, Uri, Disposable, TextEditorRevealType } from "vscode";
-import { AsmProvider } from "./provider";
-import { AsmDocument } from "./document";
-import { AsmLine } from "./asm";
+import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor, workspace, Uri, Disposable, TextEditorRevealType } from 'vscode';
+import { AsmProvider } from './provider';
+import { AsmDocument } from './document';
+import { AsmLine } from './asm';
 
 export class AsmDecorator {
 
