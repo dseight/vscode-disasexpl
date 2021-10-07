@@ -11,7 +11,7 @@
         "url": "https://github.com/dseight/vscode-disasexpl"
     },
     "engines": {
-        "vscode": "^1.23.0"
+        "vscode": "^1.36.0"
     },
     "categories": [
         "Other"
@@ -65,7 +65,7 @@
     },
     "devDependencies": {
         "@types/node": "^7.10.13",
-        "@types/vscode": "^1.23.0",
+        "@types/vscode": "^1.36.0",
         "@typescript-eslint/eslint-plugin": "^4.32.0",
         "@typescript-eslint/parser": "^4.32.0",
         "eslint": "^7.32.0",
