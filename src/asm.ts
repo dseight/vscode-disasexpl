@@ -137,8 +137,8 @@ export class AsmParser {
     cudaBeginDef = /\.(entry|func)\s+(?:\([^)]*\)\s*)?([$.A-Z_a-z][\w$.]*)\($/;
     cudaEndDef = /^\s*\)\s*$/;
 
-    asmOpcodeRe = /^\s*([\da-f]+):\s*(([\da-f]{2} ?)+)\s*(.*)/;
-    lineRe = /^(\/[^:]+):(\d+).*/;
+    asmOpcodeRe = /^\s*(?<address>[\da-f]+):\s*(?<opcodes>([\da-f]{2} ?)+)\s*(?<disasm>.*)/;
+    lineRe = /^(\/[^:]+):(?<line>\d+).*/;
     labelRe = /^([\da-f]+)\s+<([^>]+)>:$/;
     destRe = /\s([\da-f]+)\s+<([^+>]+)(\+0x[\da-f]+)?>$/;
     commentRe = /[#;]/;
@@ -576,7 +576,7 @@ export class AsmParser {
 
             let match = line.match(this.lineRe);
             if (match) {
-                source = new AsmSource(match[1], parseInt(match[2]));
+                source = new AsmSource(match[1], parseInt(match.groups!.line));
                 continue;
             }
 
@@ -596,9 +596,9 @@ export class AsmParser {
 
             match = line.match(this.asmOpcodeRe);
             if (match) {
-                const address = parseInt(match[1], 16);
-                const opcodes = match[2].split(' ').filter(x => !!x).join(' ');
-                const disassembly = " " + this.filterAsmLine(match[4], filter);
+                const address = parseInt(match.groups!.address, 16);
+                const opcodes = match.groups!.opcodes.split(' ').filter(x => !!x).join(' ');
+                const disassembly = " " + this.filterAsmLine(match.groups!.disasm, filter);
                 asm.push(new BinaryAsmLine(disassembly, source, labelsInLine, address, opcodes));
             }
         }
