@@ -38,10 +38,12 @@ export class AsmFilter {
 export class AsmSource {
     file: string | undefined;
     line: number;
+    column: number;
 
     constructor(file: string | undefined, line: number) {
         this.file = file;
         this.line = line;
+        this.column = 0;
     }
 }
 
@@ -364,7 +366,7 @@ export class AsmParser {
         const commentOnly = /^\s*(((#|@|\/\/).*)|(\/\*.*\*\/)|(;\s*)|(;[^;].*)|(;;.*\S.*))$/;
 
         const commentOnlyNvcc = /^\s*(((#|;|\/\/).*)|(\/\*.*\*\/))$/;
-        const sourceTag = /^\s*\.loc\s+(\d+)\s+(\d+).*/;
+        const sourceTag = /^\s*\.loc\s+(\d+)\s+(\d+)\s+(.*)/;
         const sourceD2Tag = /^\s*\.d2line\s+(\d+),?\s*(\d*).*/;
         const source6502Dbg = /^\s*\.dbg\s+line,\s*"([^"]+)",\s*(\d+)/;
         const source6502DbgEnd = /^\s*\.dbg\s+line[^,]/;
@@ -390,6 +392,10 @@ export class AsmParser {
                         !file.match(stdInLooking) ? file : undefined,
                         sourceLine
                     );
+                    const sourceCol = parseInt(match[3]);
+                    if (!isNaN(sourceCol) && sourceCol !== 0) {
+                        source.column = sourceCol;
+                    }
                 } else {
                     source = undefined;
                 }
