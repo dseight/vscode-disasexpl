@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.2.2 - 2020-10-8
+### Fixed
+- Fix relative paths handling when detecting assembly-to-source relation.
+
 ## 0.2.1 - 2021-09-29
 ### Added
 - `${relativeFileDirname}` option in settings variables (to be compatible with https://github.com/microsoft/vscode-docs/blob/main/docs/editor/variables-reference.md). Old `${relativeFileDir}` should not be used anymore, as it may be removed in future releases.
