@@ -117,7 +117,8 @@ export class AsmParser {
     mipsLabelDefinition = /^\$[\w$.]+:/;
     dataDefn = /^\s*\.(string|asciz|ascii|[1248]?byte|short|x?word|long|quad|value|zero)/;
     fileFind = /^\s*\.file\s+(\d+)\s+"([^"]+)"(\s+"([^"]+)")?.*/;
-    hasOpcodeRe = /^\s*[A-Za-z]/;
+    // Opcode expression here matches LLVM-style opcodes of the form `%blah = opcode`
+    hasOpcodeRe = /^\s*(%[$.A-Z_a-z][\w$.]*\s*=\s*)?[A-Za-z]/;
     instructionRe = /^\s*[A-Za-z]+/;
     identifierFindRe = /[$.@A-Z_a-z][\dA-z]*/g;
     hasNvccOpcodeRe = /^\s*[@A-Za-z|]/;
@@ -125,7 +126,7 @@ export class AsmParser {
     definesGlobal = /^\s*\.(?:globa?l|GLB|export)\s*([.A-Z_a-z][\w$.]*)/;
     definesWeak = /^\s*\.(?:weakext|weak)\s*([.A-Z_a-z][\w$.]*)/;
     indentedLabelDef = /^\s*([$.A-Z_a-z][\w$.]*):/;
-    assignmentDef = /^\s*([$.A-Z_a-z][\w$.]+)\s*=/;
+    assignmentDef = /^\s*([$.A-Z_a-z][\w$.]*)\s*=/;
     directive = /^\s*\..*$/;
     startAppBlock = /\s*#APP.*/;
     endAppBlock = /\s*#NO_APP.*/;
