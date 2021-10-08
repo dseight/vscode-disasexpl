@@ -607,6 +607,10 @@ export class AsmParser {
                 continue;
             }
 
+            if (func && line === `${func}():`) {
+                continue;
+            }
+
             if (!func || !this.isUserFunction(func)) {
                 continue;
             }
