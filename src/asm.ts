@@ -194,6 +194,9 @@ export class AsmParser {
         let currentLabelSet = new Array<string>();
         let inLabelGroup = false;
         let inCustomAssembly = 0;
+        const startBlock = /\.cfi_startproc/;
+        const endBlock = /\.cfi_endproc/;
+        let inFunction = false;
 
         // Scan through looking for definite label usages (ones used by opcodes),
         // and ones that are weakly used: that is, their use is conditional on another label.
@@ -203,11 +206,19 @@ export class AsmParser {
         //       mov eax, .baz
         // In this case, the '.baz' is used by an opcode, and so is strongly used.
         // The '.foo' is weakly used by .baz.
+        // Also, if we have random data definitions within a block of a function (between
+        // cfi_startproc and cfi_endproc), we assume they are strong usages. This covers things
+        // like jump tables embedded in ARM code.
+        // See https://github.com/compiler-explorer/compiler-explorer/issues/2788
         for (let line of asmLines) {
             if (this.startAppBlock.test(line) || this.startAsmNesting.test(line)) {
                 inCustomAssembly++;
             } else if (this.endAppBlock.test(line) || this.endAsmNesting.test(line)) {
                 inCustomAssembly--;
+            } else if (startBlock.test(line)) {
+                inFunction = true;
+            } else if (endBlock.test(line)) {
+                inFunction = false;
             }
 
             if (inCustomAssembly > 0) {
@@ -258,11 +269,17 @@ export class AsmParser {
                 const isOpcode = this.hasOpcode(line, false);
                 if (isDataDefinition || isOpcode) {
                     for (const currentLabel of currentLabelSet) {
-                        if (weakUsages.get(currentLabel) === undefined) {
-                            weakUsages.set(currentLabel, []);
+                        if (inFunction && isDataDefinition) {
+                            // Data definitions in the middle of code should be treated as if they were used strongly.
+                            for (const label of match)
+                                labelsUsed.add(label);
+                        } else {
+                            if (weakUsages.get(currentLabel) === undefined) {
+                                weakUsages.set(currentLabel, []);
+                            }
+                            for (const label of match)
+                                weakUsages.get(currentLabel)!.push(label);
                         }
-                        for (const label of match)
-                            weakUsages.get(currentLabel)!.push(label);
                     }
                 }
             }
