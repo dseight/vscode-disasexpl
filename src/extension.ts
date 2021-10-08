@@ -1,7 +1,7 @@
 'use strict';
 
 import { workspace, window, commands, ExtensionContext } from 'vscode';
-import { AsmProvider, encodeAsmUri } from './provider';
+import { AsmProvider, getAsmUri } from './provider';
 import { AsmDecorator } from './decorator';
 
 export function activate(context: ExtensionContext): void {
