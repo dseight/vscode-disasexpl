@@ -1,6 +1,6 @@
 'use strict';
 
-import { workspace, languages, Uri, EventEmitter, TextDocumentContentProvider, Event } from 'vscode';
+import { workspace, languages, Uri, EventEmitter, TextDocumentContentProvider, Event, TextDocument } from 'vscode';
 import * as Path from 'path';
 import { AsmDocument } from './document';
 
@@ -40,16 +40,17 @@ export class AsmProvider implements TextDocumentContentProvider {
 
 }
 
-export function encodeAsmUri(uri: Uri): Uri {
-    const configuration = workspace.getConfiguration('', uri);
+export function getAsmUri(source: TextDocument): Uri {
+    const sourceUri = source.uri;
+    const configuration = workspace.getConfiguration('', sourceUri);
 
     type Associations = Record<string, string>;
     const associations = configuration.get<Associations>('disasexpl.associations');
 
     // by default just replace file extension with '.S'
-    const defaultUri = uri.with({
+    const defaultUri = sourceUri.with({
         scheme: AsmProvider.scheme,
-        path: pathWithoutExtension(uri.path) + '.S'
+        path: pathWithoutExtension(sourceUri.path) + '.S'
     });
 
     if (associations === undefined) {
@@ -57,17 +58,12 @@ export function encodeAsmUri(uri: Uri): Uri {
     }
 
     for (const key in associations) {
-        // that's a nasty way to get the doc...
-        const doc = workspace.textDocuments.find(doc => doc.uri === uri);
-        if (doc === undefined) {
-            continue;
-        }
-        const match = languages.match({ pattern: key }, doc);
+        const match = languages.match({ pattern: key }, source);
         if (match > 0) {
-            const associated = associations[key];
-            return uri.with({
+            const associationRule = associations[key];
+            return sourceUri.with({
                 scheme: AsmProvider.scheme,
-                path: resolvePath(uri.fsPath, associated)
+                path: resolvePath(sourceUri.fsPath, associationRule)
             });
         }
     }
@@ -84,7 +80,7 @@ function pathWithoutExtension(path: string): string {
 
 // Resolve path with almost all variable substitution that supported in
 // Debugging and Task configuration files
-function resolvePath(path: string, associated: string): string {
+function resolvePath(path: string, associationRule: string): string {
     if (workspace.workspaceFolders === undefined) {
         return path;
     }
@@ -121,8 +117,8 @@ function resolvePath(path: string, associated: string): string {
     };
 
     const variablesRe = /\$\{(.*?)\}/g;
-    const resolvedPath = associated.replace(variablesRe, (match: string, name: string) => {
-        const value = variables[name];
+    const resolvedPath = associationRule.replace(variablesRe, (match: string, varName: string) => {
+        const value = variables[varName];
         if (value !== undefined) {
             return value;
         } else {

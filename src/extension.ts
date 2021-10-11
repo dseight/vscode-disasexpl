@@ -1,7 +1,7 @@
 'use strict';
 
 import { workspace, window, commands, ExtensionContext } from 'vscode';
-import { AsmProvider, encodeAsmUri } from './provider';
+import { AsmProvider, getAsmUri } from './provider';
 import { AsmDecorator } from './decorator';
 
 export function activate(context: ExtensionContext): void {
@@ -14,7 +14,7 @@ export function activate(context: ExtensionContext): void {
     // register command that crafts an uri with the `disassembly` scheme,
     // open the dynamic document, and shows it in the next editor
     const commandRegistration = commands.registerTextEditorCommand('disasexpl.show', srcEditor => {
-        const asmUri = encodeAsmUri(srcEditor.document.uri);
+        const asmUri = getAsmUri(srcEditor.document);
 
         const options = {
             viewColumn: srcEditor.viewColumn! + 1,
