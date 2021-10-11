@@ -1,6 +1,6 @@
 'use strict';
 
-import { workspace, languages, Uri, EventEmitter, TextDocumentContentProvider, Event } from 'vscode';
+import { workspace, languages, Uri, EventEmitter, TextDocumentContentProvider, Event, TextDocument } from 'vscode';
 import * as Path from 'path';
 import { AsmDocument } from './document';
 
