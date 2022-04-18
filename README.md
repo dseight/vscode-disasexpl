@@ -18,6 +18,11 @@ Objdumped disassembly should be generated with lines info:
 
     objdump -d compiled.bin -l > disassembly.S
 
+Note that to use objdumped disassembly, you need to add this to your project settings:
+```json
+"disasexpl.useBinaryParsing": true
+```
+
 When you don't want to specify the output file manually (or use e.g. CMake or build scripts) and compile with GCC, you can use the [-save-temps option](https://gcc.gnu.org/onlinedocs/gcc/Developer-Options.html#index-save-temps). This will put a `source.s` file into the output directory. Compile with:
 
     $(CC) -g -save-temps $(CFLAGS) source.c
