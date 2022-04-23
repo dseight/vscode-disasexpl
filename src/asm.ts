@@ -137,7 +137,7 @@ export class AsmParser {
     cudaBeginDef = /\.(entry|func)\s+(?:\([^)]*\)\s*)?([$.A-Z_a-z][\w$.]*)\($/;
     cudaEndDef = /^\s*\)\s*$/;
 
-    asmOpcodeRe = /^\s*(?<address>[\da-f]+):\s*(?<opcodes>([\da-f]{2} ?)+)\s*(?<disasm>.*)/;
+    asmOpcodeRe = /^\s*(?<address>[\da-f]+):([|\\\/>X-]*\s*)*(?<opcodes>([\da-f]{2} ?)+)\s*(?<disasm>.*)/;
     lineRe = /^(\/[^:]+):(?<line>\d+).*/;
 
     // labelRe is made very greedy as it's also used with demangled objdump
