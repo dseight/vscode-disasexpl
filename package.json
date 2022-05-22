@@ -28,8 +28,8 @@
                     "disasexpl.associations": {
                         "type": "object",
                         "default": {
-                            "**/*.c": "${fileDirname}/${fileBasenameNoExtension}.S",
-                            "**/*.cpp": "${fileDirname}/${fileBasenameNoExtension}.S"
+                            "**/*.c": ["${fileDirname}/${fileBasenameNoExtension}.S"],
+                            "**/*.cpp": ["${fileDirname}/${fileBasenameNoExtension}.S"]
                         },
                         "description": "Where to search disassembly for matching source files",
                         "scope": "resource"

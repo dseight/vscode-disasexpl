@@ -31,8 +31,8 @@ Next, when you generated disassembly, you should tell the extension where to sea
 
 ```json
 "disasexpl.associations": {
-    "**/*.c": "${fileDirname}/${fileBasenameNoExtension}.S",
-    "**/*.cpp": "${fileDirname}/${fileBasenameNoExtension}.S"
+    "**/*.c": ["${fileDirname}/${fileBasenameNoExtension}.S"],
+    "**/*.cpp": ["${fileDirname}/${fileBasenameNoExtension}.S"]
 }
 ```
 Make sure to adjust the disassembly extension to `.s` when using the "-save-temps" option.

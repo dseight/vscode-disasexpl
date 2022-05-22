@@ -3,6 +3,7 @@
 import { workspace, languages, Uri, EventEmitter, TextDocumentContentProvider, Event, TextDocument } from 'vscode';
 import * as Path from 'path';
 import { AsmDocument } from './document';
+import { accessSync } from 'fs';
 
 export class AsmProvider implements TextDocumentContentProvider {
 
@@ -44,31 +45,36 @@ export function getAsmUri(source: TextDocument): Uri {
     const sourceUri = source.uri;
     const configuration = workspace.getConfiguration('', sourceUri);
 
-    type Associations = Record<string, string>;
+    type Associations = Record<string, string[]>;
     const associations = configuration.get<Associations>('disasexpl.associations');
 
     // by default just replace file extension with '.S'
-    const defaultUri = sourceUri.with({
+    let uri = sourceUri.with({
         scheme: AsmProvider.scheme,
         path: pathWithoutExtension(sourceUri.path) + '.S'
     });
 
     if (associations === undefined) {
-        return defaultUri;
+        return uri;
     }
 
     for (const key in associations) {
         const match = languages.match({ pattern: key }, source);
         if (match > 0) {
-            const associationRule = associations[key];
-            return sourceUri.with({
-                scheme: AsmProvider.scheme,
-                path: resolvePath(sourceUri.fsPath, associationRule)
+            associations[key].forEach(e => {
+                try {
+                    const path = resolvePath(sourceUri.fsPath, e);
+                    accessSync(path);
+                    uri = sourceUri.with({
+                        scheme: AsmProvider.scheme,
+                        path: path
+                    });
+                } catch {}
             });
         }
     }
 
-    return defaultUri;
+    return uri;
 }
 
 /**
