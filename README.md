@@ -12,7 +12,7 @@ First you need disassembly of your source files. That's because the extension do
 
 Regular disassembly may be generated with:
 
-    $(CC) -g -o disassembly.S $(CFLAGS) -S source.c
+    $(CC) -g -o disassembly.S -fno-verbose-asm $(CFLAGS) -S source.c
 
 Objdumped disassembly should be generated with lines info:
 
